@@ -1,2 +1,5 @@
 rootProject.name = 'Certificates'
+include 'dao'
+include 'service'
+include 'controller'
 
