@@ -5,10 +5,7 @@ import com.epam.esm.model.tag.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class GiftCertificateDaoTest {
 
@@ -19,7 +16,7 @@ class GiftCertificateDaoTest {
         GiftCertificate giftCertificate = new GiftCertificate(null, "name", "description", 200.1, 200L,
                 LocalDateTime.now(), LocalDateTime.now().plusDays(110), List.of(tag1, tag2));
         GiftCertificateDao dao = new GiftCertificateDao();
-        GiftCertificate result = dao.save(giftCertificate);
+        GiftCertificate result = dao.saveEntity(giftCertificate);
         System.out.println(result);
     }
 }

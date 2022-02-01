@@ -24,7 +24,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     private final ConnectionPool connectionPool = ConnectionPoolImpl.getInstance();
 
     @Override
-    public GiftCertificate save(GiftCertificate entity) {
+    public GiftCertificate saveEntity(GiftCertificate entity) {
         Connection connection = connectionPool.takeConnection();
         try {
             connection.setAutoCommit(false);
@@ -43,25 +43,25 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     //todo to be implemented
     @Override
-    public Boolean update(GiftCertificate entity) {
+    public Boolean updateEntity(GiftCertificate entity) {
         return null;
     }
 
     //todo to be implemented
     @Override
-    public Boolean delete(GiftCertificate entity) {
+    public Boolean deleteEntity(GiftCertificate entity) {
         return null;
     }
 
     //todo to be implemented
     @Override
-    public List<GiftCertificate> findAll() {
+    public List<GiftCertificate> findAllEntities() {
         return null;
     }
 
     //todo to be implemented
     @Override
-    public GiftCertificate findById(Integer id) {
+    public GiftCertificate findEntityById(Integer id) {
         return null;
     }
 

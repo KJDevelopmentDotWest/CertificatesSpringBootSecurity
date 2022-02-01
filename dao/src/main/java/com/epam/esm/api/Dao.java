@@ -11,34 +11,34 @@ public interface Dao<T extends Entity> {
      * @param entity entity to be saved
      * @return saved entity
      */
-    T save(T entity);
+    T saveEntity(T entity);
 
     /**
      *
      * @param entity entity to be updated
      * @return true if entity updated successfully, false otherwise
      */
-    Boolean update(T entity);
+    Boolean updateEntity(T entity);
 
     /**
      *
      * @param entity entity to be deleted
      * @return true if entity deleted successfully, false otherwise
      */
-    Boolean delete(T entity);
+    Boolean deleteEntity(T entity);
 
     /**
      *
      * @return list of entities
      */
-    List<T> findAll();
+    List<T> findAllEntities();
 
     /**
      *
      * @param id entity id
      * @return entity with id == entity.id
      */
-    T findById(Integer id);
+    T findEntityById(Integer id);
 
     /**
      *

@@ -22,7 +22,7 @@ public class TagDao implements Dao<Tag> {
     private final ConnectionPool connectionPool = ConnectionPoolImpl.getInstance();
 
     @Override
-    public Tag save(Tag entity) {
+    public Tag saveEntity(Tag entity) {
         Connection connection = connectionPool.takeConnection();
         try {
             return saveTag(connection, entity);
@@ -36,25 +36,25 @@ public class TagDao implements Dao<Tag> {
 
     //todo to be implemented
     @Override
-    public Boolean update(Tag entity) {
+    public Boolean updateEntity(Tag entity) {
         return null;
     }
 
     //todo to be implemented
     @Override
-    public Boolean delete(Tag entity) {
+    public Boolean deleteEntity(Tag entity) {
         return null;
     }
 
     //todo to be implemented
     @Override
-    public List<Tag> findAll() {
+    public List<Tag> findAllEntities() {
         return null;
     }
 
     //todo to be implemented
     @Override
-    public Tag findById(Integer id) {
+    public Tag findEntityById(Integer id) {
         return null;
     }
 
