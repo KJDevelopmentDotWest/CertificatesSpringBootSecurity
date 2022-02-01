@@ -19,4 +19,27 @@ class GiftCertificateDaoTest {
         GiftCertificate result = dao.saveEntity(giftCertificate);
         System.out.println(result);
     }
+
+    @Test
+    void findAllTest(){
+        GiftCertificateDao dao = new GiftCertificateDao();
+        System.out.println(dao.findAllEntities());
+    }
+
+    @Test
+    void findByIdTest(){
+        GiftCertificateDao dao = new GiftCertificateDao();
+        System.out.println(dao.findEntityById(10));
+    }
+
+    @Test
+    void updateEntityTest(){
+        GiftCertificateDao dao = new GiftCertificateDao();
+        Tag tag1 = new Tag(1, "firstTag");
+        Tag tag3 = new Tag(2, "secondTag");
+        GiftCertificate giftCertificate = new GiftCertificate(11, "unchangedname", "changeddescription", 200.1, 200L,
+                LocalDateTime.now(), LocalDateTime.now().plusDays(110), List.of(tag1, tag3));
+        dao.updateEntity(giftCertificate);
+        System.out.println(dao.findEntityById(11));
+    }
 }
