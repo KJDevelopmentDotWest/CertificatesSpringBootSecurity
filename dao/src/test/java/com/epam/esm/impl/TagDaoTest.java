@@ -1,6 +1,7 @@
 package com.epam.esm.impl;
 
-import com.epam.esm.model.tag.Tag;
+import com.epam.esm.dao.impl.TagDao;
+import com.epam.esm.dao.model.tag.Tag;
 import org.junit.jupiter.api.Test;
 
 class TagDaoTest {

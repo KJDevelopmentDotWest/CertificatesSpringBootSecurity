@@ -1,6 +1,6 @@
-package com.epam.esm.connectionpool.impl;
+package com.epam.esm.dao.connectionpool.impl;
 
-import com.epam.esm.connectionpool.api.ConnectionPool;
+import com.epam.esm.dao.connectionpool.api.ConnectionPool;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.locks.ReentrantLock;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -1,9 +1,9 @@
-package com.epam.esm.impl;
+package com.epam.esm.dao.impl;
 
-import com.epam.esm.api.Dao;
-import com.epam.esm.connectionpool.api.ConnectionPool;
-import com.epam.esm.connectionpool.impl.ConnectionPoolImpl;
-import com.epam.esm.model.tag.Tag;
+import com.epam.esm.dao.api.Dao;
+import com.epam.esm.dao.connectionpool.api.ConnectionPool;
+import com.epam.esm.dao.connectionpool.impl.ConnectionPoolImpl;
+import com.epam.esm.dao.model.tag.Tag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,6 +26,7 @@ public class TagDao implements Dao<Tag> {
 
     private static final String SQL_FIND_ALL_TAGS = "SELECT id, name FROM tag";
     private static final String SQL_FIND_TAG_BY_ID = "SELECT id, name FROM tag WHERE id = ?";
+    private static final String SQL_FIND_TAG_BY_NAME = "SELECT id, name FROM tag WHERE name = ?";
 
     private final ConnectionPool connectionPool = ConnectionPoolImpl.getInstance();
 
@@ -94,10 +95,21 @@ public class TagDao implements Dao<Tag> {
         }
     }
 
-    //todo to be implemented
-    @Override
-    public Integer getRowsNumber() {
-        return null;
+    /**
+     *
+     * @param name name to be searched
+     * @return tag with provided name, null otherwise
+     */
+    public Tag findTagByName(String name){
+        Connection connection = connectionPool.takeConnection();
+        try {
+            return findTagByName(connection, name);
+        } catch (SQLException e){
+            logger.error(e);
+            return null;
+        } finally {
+            connectionPool.returnConnection(connection);
+        }
     }
 
     private Tag saveTag(Connection connection, Tag tag) throws SQLException {
@@ -145,6 +157,21 @@ public class TagDao implements Dao<Tag> {
     private Tag findTagById(Connection connection, Integer id) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement(SQL_FIND_TAG_BY_ID);
         preparedStatement.setInt(1, id);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        Tag tag;
+        if (resultSet.next()){
+            tag = convertResultSetToTag(resultSet);
+        } else {
+            tag = null;
+        }
+        preparedStatement.close();
+        resultSet.close();
+        return tag;
+    }
+
+    private Tag findTagByName(Connection connection, String name) throws SQLException {
+        PreparedStatement preparedStatement = connection.prepareStatement(SQL_FIND_TAG_BY_NAME);
+        preparedStatement.setString(1, name);
         ResultSet resultSet = preparedStatement.executeQuery();
         Tag tag;
         if (resultSet.next()){

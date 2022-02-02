@@ -1,6 +1,6 @@
-package com.epam.esm.connectionpool.impl;
+package com.epam.esm.dao.connectionpool.impl;
 
-import com.epam.esm.connectionpool.api.ConnectionPool;
+import com.epam.esm.dao.connectionpool.api.ConnectionPool;
 
 import java.sql.*;
 import java.util.Map;

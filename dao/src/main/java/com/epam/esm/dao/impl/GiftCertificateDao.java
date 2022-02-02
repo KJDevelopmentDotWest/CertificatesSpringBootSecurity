@@ -1,11 +1,11 @@
-package com.epam.esm.impl;
+package com.epam.esm.dao.impl;
 
-import com.epam.esm.api.Dao;
-import com.epam.esm.connectionpool.api.ConnectionPool;
-import com.epam.esm.connectionpool.impl.ConnectionPoolImpl;
-import com.epam.esm.model.giftcertificate.GiftCertificate;
-import com.epam.esm.model.tag.Tag;
-import com.epam.esm.sqlgenerator.SqlGenerator;
+import com.epam.esm.dao.api.Dao;
+import com.epam.esm.dao.connectionpool.api.ConnectionPool;
+import com.epam.esm.dao.connectionpool.impl.ConnectionPoolImpl;
+import com.epam.esm.dao.model.tag.Tag;
+import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
+import com.epam.esm.dao.sqlgenerator.SqlGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,7 +16,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class GiftCertificateDao implements Dao<GiftCertificate> {
 
@@ -123,19 +122,13 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         }
     }
 
-    //todo to be implemented
-    @Override
-    public Integer getRowsNumber() {
-        return null;
-    }
-
     /**
      *
      * @param tagId id of tag to be searched, null if no need to search by tag
      * @param namePart part of name to be filtered, null if no need to filter by name part
      * @param descriptionPart part of description to be filtered, null if no need to filter description part
      * @param sortBy sort by code, null if no need to sort
-     * @param ascending true for ascending, false if descending. ignored if sortBy is null
+     * @param ascending true for ascending sort, false if descending. ignored if sortBy is null
      * @return list of gift certificates that match parameters
      */
     public List<GiftCertificate> findGiftCertificatesWithParameters (Integer tagId, String namePart, String descriptionPart, SqlGenerator.SortByCode sortBy, Boolean ascending){

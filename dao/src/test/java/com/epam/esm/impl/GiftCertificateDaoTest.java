@@ -1,8 +1,9 @@
 package com.epam.esm.impl;
 
-import com.epam.esm.model.giftcertificate.GiftCertificate;
-import com.epam.esm.model.tag.Tag;
-import com.epam.esm.sqlgenerator.SqlGenerator;
+import com.epam.esm.dao.impl.GiftCertificateDao;
+import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
+import com.epam.esm.dao.model.tag.Tag;
+import com.epam.esm.dao.sqlgenerator.SqlGenerator;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -37,7 +38,7 @@ class GiftCertificateDaoTest {
     void updateEntityTest(){
         GiftCertificateDao dao = new GiftCertificateDao();
         Tag tag1 = new Tag(1, "firstTag");
-        Tag tag3 = new Tag(2, "secondTag");
+        Tag tag3 = new Tag(3, "secondTag");
         GiftCertificate giftCertificate = new GiftCertificate(11, "unchangedname", "changeddescription", 200.1, 200L,
                 LocalDateTime.now(), LocalDateTime.now().plusDays(110), List.of(tag1, tag3));
         dao.updateEntity(giftCertificate);
@@ -47,6 +48,6 @@ class GiftCertificateDaoTest {
     @Test
     void testGenerator(){
         GiftCertificateDao dao = new GiftCertificateDao();
-        System.out.println(dao.findGiftCertificatesWithParameters(null, null, null, SqlGenerator.SortByCode.SORT_BY_NAME, false));;
+        System.out.println(dao.findGiftCertificatesWithParameters(null, null, null, SqlGenerator.SortByCode.SORT_BY_NAME, false));
     }
 }

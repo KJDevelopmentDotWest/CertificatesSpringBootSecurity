@@ -1,6 +1,4 @@
-package com.epam.esm.sqlgenerator;
-
-import com.epam.esm.impl.GiftCertificateDao;
+package com.epam.esm.dao.sqlgenerator;
 
 import java.util.Objects;
 

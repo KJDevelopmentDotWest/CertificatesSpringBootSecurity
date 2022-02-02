@@ -1,4 +1,4 @@
-package com.epam.esm.model;
+package com.epam.esm.dao.model;
 
 /**
  * Entity interface indicates that class represents entity

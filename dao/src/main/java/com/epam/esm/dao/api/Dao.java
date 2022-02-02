@@ -1,6 +1,6 @@
-package com.epam.esm.api;
+package com.epam.esm.dao.api;
 
-import com.epam.esm.model.Entity;
+import com.epam.esm.dao.model.Entity;
 
 import java.util.List;
 
@@ -39,11 +39,4 @@ public interface Dao<T extends Entity> {
      * @return entity with id == entity.id
      */
     T findEntityById(Integer id);
-
-    /**
-     *
-     * @return number of entities in database
-     */
-    Integer getRowsNumber();
-
 }
