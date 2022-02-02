@@ -2,6 +2,7 @@ package com.epam.esm.impl;
 
 import com.epam.esm.model.giftcertificate.GiftCertificate;
 import com.epam.esm.model.tag.Tag;
+import com.epam.esm.sqlgenerator.SqlGenerator;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -41,5 +42,11 @@ class GiftCertificateDaoTest {
                 LocalDateTime.now(), LocalDateTime.now().plusDays(110), List.of(tag1, tag3));
         dao.updateEntity(giftCertificate);
         System.out.println(dao.findEntityById(11));
+    }
+
+    @Test
+    void testGenerator(){
+        GiftCertificateDao dao = new GiftCertificateDao();
+        System.out.println(dao.findGiftCertificatesWithParameters(null, null, null, SqlGenerator.SortByCode.SORT_BY_NAME, false));;
     }
 }

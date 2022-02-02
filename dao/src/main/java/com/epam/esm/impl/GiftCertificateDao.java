@@ -5,6 +5,7 @@ import com.epam.esm.connectionpool.api.ConnectionPool;
 import com.epam.esm.connectionpool.impl.ConnectionPoolImpl;
 import com.epam.esm.model.giftcertificate.GiftCertificate;
 import com.epam.esm.model.tag.Tag;
+import com.epam.esm.sqlgenerator.SqlGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,7 +16,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 public class GiftCertificateDao implements Dao<GiftCertificate> {
 
@@ -33,18 +34,12 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     private static final String SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_GIFT_CERTIFICATE_ID = "DELETE FROM gift_certificate_to_tag WHERE gift_certificate_id = ?";
     private static final String SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_GIFT_CERTIFICATE_ID_AND_TAG_ID = "DELETE FROM gift_certificate_to_tag WHERE gift_certificate_id = ? AND tag_id = ?";
 
-    private static final String SQL_UPDATE_GIFT_CERTIFICATE_START = "UPDATE gift_certificate SET ";
-    private static final String SQL_UPDATE_NAME_COLUMN = "name";
-    private static final String SQL_UPDATE_DESCRIPTION_COLUMN = "description";
-    private static final String SQL_UPDATE_PRICE_COLUMN = "price";
-    private static final String SQL_UPDATE_DURATION_COLUMN = "duration";
-    private static final String SQL_UPDATE_CREATE_DATE_COLUMN = "create_date";
-    private static final String SQL_UPDATE_LAST_UPDATE_DATE_COLUMN = "last_update_date";
-    private static final String EQUAL_SYMBOL = " = ";
-    private static final String NOT_EQUAL_SYMBOL = " != ";
-    private static final String QUESTION_SYMBOL = " ?";
-    private static final String SQL_UPDATE_GIFT_CERTIFICATE_END = "WHERE id = ? AND ";
-
+    private static final String SQL_NAME_COLUMN = "name";
+    private static final String SQL_DESCRIPTION_COLUMN = "description";
+    private static final String SQL_PRICE_COLUMN = "price";
+    private static final String SQL_DURATION_COLUMN = "duration";
+    private static final String SQL_CREATE_DATE_COLUMN = "create_date";
+    private static final String SQL_LAST_UPDATE_DATE_COLUMN = "last_update_date";
 
     private final ConnectionPool connectionPool = ConnectionPoolImpl.getInstance();
 
@@ -134,6 +129,28 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         return null;
     }
 
+    /**
+     *
+     * @param tagId id of tag to be searched, null if no need to search by tag
+     * @param namePart part of name to be filtered, null if no need to filter by name part
+     * @param descriptionPart part of description to be filtered, null if no need to filter description part
+     * @param sortBy sort by code, null if no need to sort
+     * @param ascending true for ascending, false if descending. ignored if sortBy is null
+     * @return list of gift certificates that match parameters
+     */
+    public List<GiftCertificate> findGiftCertificatesWithParameters (Integer tagId, String namePart, String descriptionPart, SqlGenerator.SortByCode sortBy, Boolean ascending){
+        Connection connection = connectionPool.takeConnection();
+        List<GiftCertificate> giftCertificates = new ArrayList<>();
+        try {
+            giftCertificates = findGiftCertificatesWithParameters(connection, tagId, namePart, descriptionPart, sortBy, ascending);
+        } catch (SQLException e){
+            logger.error(e);
+        } finally {
+            connectionPool.returnConnection(connection);
+        }
+        return giftCertificates;
+    }
+
     private GiftCertificate saveGiftCertificate(Connection connection, GiftCertificate giftCertificate) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement(SQL_SAVE_GIFT_CERTIFICATE, new String[] {"id"});
         preparedStatement.setString(1, giftCertificate.name());
@@ -207,37 +224,39 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     public Boolean updateGiftCertificate(Connection connection, GiftCertificate giftCertificate) throws SQLException {
 
-        PreparedStatement preparedStatement = connection.prepareStatement(generateUpdateColString(SQL_UPDATE_NAME_COLUMN));
+        SqlGenerator sqlGenerator = SqlGenerator.getInstance();
+
+        PreparedStatement preparedStatement = connection.prepareStatement(sqlGenerator.generateUpdateColString(SQL_NAME_COLUMN));
         preparedStatement.setString(1, giftCertificate.name());
         preparedStatement.setInt(2, giftCertificate.id());
         preparedStatement.setString(3, giftCertificate.name());
         preparedStatement.executeUpdate();
 
-        preparedStatement = connection.prepareStatement(generateUpdateColString(SQL_UPDATE_DESCRIPTION_COLUMN));
+        preparedStatement = connection.prepareStatement(sqlGenerator.generateUpdateColString(SQL_DESCRIPTION_COLUMN));
         preparedStatement.setString(1, giftCertificate.description());
         preparedStatement.setInt(2, giftCertificate.id());
         preparedStatement.setString(3, giftCertificate.description());
         preparedStatement.executeUpdate();
 
-        preparedStatement = connection.prepareStatement(generateUpdateColString(SQL_UPDATE_PRICE_COLUMN));
+        preparedStatement = connection.prepareStatement(sqlGenerator.generateUpdateColString(SQL_PRICE_COLUMN));
         preparedStatement.setDouble(1, giftCertificate.price());
         preparedStatement.setInt(2, giftCertificate.id());
         preparedStatement.setDouble(3, giftCertificate.price());
         preparedStatement.executeUpdate();
 
-        preparedStatement = connection.prepareStatement(generateUpdateColString(SQL_UPDATE_DURATION_COLUMN));
+        preparedStatement = connection.prepareStatement(sqlGenerator.generateUpdateColString(SQL_DURATION_COLUMN));
         preparedStatement.setLong(1, giftCertificate.duration());
         preparedStatement.setInt(2, giftCertificate.id());
         preparedStatement.setLong(3, giftCertificate.duration());
         preparedStatement.executeUpdate();
 
-        preparedStatement = connection.prepareStatement(generateUpdateColString(SQL_UPDATE_CREATE_DATE_COLUMN));
+        preparedStatement = connection.prepareStatement(sqlGenerator.generateUpdateColString(SQL_CREATE_DATE_COLUMN));
         preparedStatement.setTimestamp(1, Timestamp.valueOf(giftCertificate.createDate()));
         preparedStatement.setInt(2, giftCertificate.id());
         preparedStatement.setTimestamp(3, Timestamp.valueOf(giftCertificate.createDate()));
         preparedStatement.executeUpdate();
 
-        preparedStatement = connection.prepareStatement(generateUpdateColString(SQL_UPDATE_LAST_UPDATE_DATE_COLUMN));
+        preparedStatement = connection.prepareStatement(sqlGenerator.generateUpdateColString(SQL_LAST_UPDATE_DATE_COLUMN));
         preparedStatement.setTimestamp(1, Timestamp.valueOf(giftCertificate.lastUpdateDate()));
         preparedStatement.setInt(2, giftCertificate.id());
         preparedStatement.setTimestamp(3, Timestamp.valueOf(giftCertificate.lastUpdateDate()));
@@ -250,7 +269,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     private void updateGiftCertificateToTagEntries(Connection connection, GiftCertificate giftCertificate) throws SQLException {
         List<Integer> tagsIdCurrent = giftCertificate.tags().stream().map(Tag::id).toList();
-        List<Integer> tagsIdPrevious = findTagsIdByGiftCertificate(connection, giftCertificate.id());
+        List<Integer> tagsIdPrevious = findTagsIdByGiftCertificateId(connection, giftCertificate.id());
 
         List<Integer> tagsIdToAdd = new ArrayList<>();
         List<Integer> tagsIdToRemove = new ArrayList<>();
@@ -286,23 +305,10 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         preparedStatement.close();
     }
 
-    private String generateUpdateColString(String columnName){
-        StringBuilder sqlUpdateString = new StringBuilder();
-        sqlUpdateString.append(SQL_UPDATE_GIFT_CERTIFICATE_START);
-        sqlUpdateString.append(columnName);
-        sqlUpdateString.append(EQUAL_SYMBOL);
-        sqlUpdateString.append(QUESTION_SYMBOL);
-        sqlUpdateString.append(SQL_UPDATE_GIFT_CERTIFICATE_END);
-        sqlUpdateString.append(columnName);
-        sqlUpdateString.append(NOT_EQUAL_SYMBOL);
-        sqlUpdateString.append(QUESTION_SYMBOL);
-        return sqlUpdateString.toString();
-    }
-
     private GiftCertificate convertResultSetToUser(Connection connection, ResultSet giftCertificateResultSet) throws SQLException{
         TagDao tagDao = new TagDao();
 
-        List<Integer> tagsId = findTagsIdByGiftCertificate(connection, giftCertificateResultSet.getInt(1));
+        List<Integer> tagsId = findTagsIdByGiftCertificateId(connection, giftCertificateResultSet.getInt(1));
 
         List<Tag> tags = new ArrayList<>();
 
@@ -318,7 +324,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
                 tags);
     }
 
-    private List<Integer> findTagsIdByGiftCertificate(Connection connection, Integer id) throws SQLException {
+    private List<Integer> findTagsIdByGiftCertificateId(Connection connection, Integer id) throws SQLException {
         PreparedStatement preparedStatement = connection.prepareStatement(SQL_FIND_TAGS_ID_BY_GIFT_CERTIFICATE_ID);
         preparedStatement.setInt(1, id);
         ResultSet tagsIdResultSet = preparedStatement.executeQuery();
@@ -329,5 +335,24 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         preparedStatement.close();
         tagsIdResultSet.close();
         return tagsId;
+    }
+
+    private List<GiftCertificate> findGiftCertificatesWithParameters
+            (Connection connection, Integer tagId, String namePart, String descriptionPart, SqlGenerator.SortByCode sortBy, Boolean ascending) throws SQLException{
+        List<GiftCertificate> result = new ArrayList<>();
+
+        String sqlQuery = SqlGenerator.getInstance().generateSQLForGiftCertificateFindWithParameters(tagId, namePart, descriptionPart, sortBy, ascending);
+
+        PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
+
+        ResultSet resultSet = preparedStatement.executeQuery();
+
+        while (resultSet.next()){
+            result.add(convertResultSetToUser(connection, resultSet));
+        }
+        preparedStatement.close();
+        resultSet.close();
+
+        return result;
     }
 }
