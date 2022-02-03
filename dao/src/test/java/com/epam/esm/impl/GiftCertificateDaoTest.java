@@ -48,6 +48,6 @@ class GiftCertificateDaoTest {
     @Test
     void testGenerator(){
         GiftCertificateDao dao = new GiftCertificateDao();
-        System.out.println(dao.findGiftCertificatesWithParameters(null, null, null, SqlGenerator.SortByCode.SORT_BY_NAME, false));
+        System.out.println(dao.findGiftCertificatesWithParameters(null, "am", null, SqlGenerator.SortByCode.SORT_BY_NAME, true));
     }
 }

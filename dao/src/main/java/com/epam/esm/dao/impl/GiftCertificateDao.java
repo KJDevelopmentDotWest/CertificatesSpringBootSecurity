@@ -1,8 +1,7 @@
 package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
-import com.epam.esm.dao.connectionpool.api.ConnectionPool;
-import com.epam.esm.dao.connectionpool.impl.ConnectionPoolImpl;
+import com.epam.esm.dao.connectionpool.DBCP;
 import com.epam.esm.dao.model.tag.Tag;
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import com.epam.esm.dao.sqlgenerator.SqlGenerator;
@@ -40,12 +39,11 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     private static final String SQL_CREATE_DATE_COLUMN = "create_date";
     private static final String SQL_LAST_UPDATE_DATE_COLUMN = "last_update_date";
 
-    private final ConnectionPool connectionPool = ConnectionPoolImpl.getInstance();
+    private final DBCP connectionPool = DBCP.getInstance();
 
     @Override
     public GiftCertificate saveEntity(GiftCertificate entity) {
-        Connection connection = connectionPool.takeConnection();
-        try {
+        try (Connection connection = connectionPool.takeConnection()){
             connection.setAutoCommit(false);
             GiftCertificate giftCertificate = saveGiftCertificate(connection, entity);
             saveGiftCertificateToTagEntries(connection, giftCertificate);
@@ -55,15 +53,12 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         } catch (SQLException e) {
             logger.error(e);
             return null;
-        } finally {
-            connectionPool.returnConnection(connection);
         }
     }
 
     @Override
     public Boolean updateEntity(GiftCertificate entity) {
-        Connection connection = connectionPool.takeConnection();
-        try {
+        try (Connection connection = connectionPool.takeConnection()){
             connection.setAutoCommit(false);
             Boolean result = updateGiftCertificate(connection, entity);
             updateGiftCertificateToTagEntries(connection, entity);
@@ -73,15 +68,12 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         } catch (SQLException e) {
             logger.error(e);
             return null;
-        } finally {
-            connectionPool.returnConnection(connection);
         }
     }
 
     @Override
     public Boolean deleteEntity(GiftCertificate entity) {
-        Connection connection = connectionPool.takeConnection();
-        try {
+        try (Connection connection = connectionPool.takeConnection()){
             connection.setAutoCommit(false);
             Boolean isDeleted = deleteGiftCertificateById(connection, entity.id());
             connection.commit();
@@ -90,35 +82,27 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         } catch (SQLException e){
             logger.error(e);
             return false;
-        } finally {
-            connectionPool.returnConnection(connection);
         }
     }
 
     @Override
     public List<GiftCertificate> findAllEntities() {
-        Connection connection = connectionPool.takeConnection();
         List<GiftCertificate> giftCertificates = new ArrayList<>();
-        try {
+        try (Connection connection = connectionPool.takeConnection()){
             giftCertificates = findAllGiftCertificates(connection);
         } catch (SQLException e){
             logger.error(e);
-        } finally {
-            connectionPool.returnConnection(connection);
         }
         return giftCertificates;
     }
 
     @Override
     public GiftCertificate findEntityById(Integer id) {
-        Connection connection = connectionPool.takeConnection();
-        try {
+        try (Connection connection = connectionPool.takeConnection()){
             return findGiftCertificateById(connection, id);
         } catch (SQLException e){
             logger.error(e);
             return null;
-        } finally {
-            connectionPool.returnConnection(connection);
         }
     }
 
@@ -132,14 +116,12 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
      * @return list of gift certificates that match parameters
      */
     public List<GiftCertificate> findGiftCertificatesWithParameters (Integer tagId, String namePart, String descriptionPart, SqlGenerator.SortByCode sortBy, Boolean ascending){
-        Connection connection = connectionPool.takeConnection();
         List<GiftCertificate> giftCertificates = new ArrayList<>();
-        try {
+        try (Connection connection = connectionPool.takeConnection()){
             giftCertificates = findGiftCertificatesWithParameters(connection, tagId, namePart, descriptionPart, sortBy, ascending);
         } catch (SQLException e){
             logger.error(e);
         } finally {
-            connectionPool.returnConnection(connection);
         }
         return giftCertificates;
     }

@@ -1,8 +1,7 @@
 package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
-import com.epam.esm.dao.connectionpool.api.ConnectionPool;
-import com.epam.esm.dao.connectionpool.impl.ConnectionPoolImpl;
+import com.epam.esm.dao.connectionpool.DBCP;
 import com.epam.esm.dao.model.tag.Tag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,70 +27,55 @@ public class TagDao implements Dao<Tag> {
     private static final String SQL_FIND_TAG_BY_ID = "SELECT id, name FROM tag WHERE id = ?";
     private static final String SQL_FIND_TAG_BY_NAME = "SELECT id, name FROM tag WHERE name = ?";
 
-    private final ConnectionPool connectionPool = ConnectionPoolImpl.getInstance();
+    private final DBCP connectionPool = DBCP.getInstance();
 
     @Override
     public Tag saveEntity(Tag entity) {
-        Connection connection = connectionPool.takeConnection();
-        try {
+        try (Connection connection = connectionPool.takeConnection()){
             return saveTag(connection, entity);
         } catch (SQLException e){
             logger.error(e);
             return null;
-        } finally {
-            connectionPool.returnConnection(connection);
         }
     }
 
     @Override
     public Boolean updateEntity(Tag entity) {
-        Connection connection = connectionPool.takeConnection();
-        try {
+        try (Connection connection = connectionPool.takeConnection()){
             return updateTag(connection, entity);
         } catch (SQLException e){
             logger.error(e);
             return false;
-        } finally {
-            connectionPool.returnConnection(connection);
         }
     }
 
     @Override
     public Boolean deleteEntity(Tag entity) {
-        Connection connection = connectionPool.takeConnection();
-        try {
+        try (Connection connection = connectionPool.takeConnection()){
             return deleteTag(connection, entity.id());
         } catch (SQLException e){
             logger.error(e);
             return false;
-        } finally {
-            connectionPool.returnConnection(connection);
         }
     }
 
     @Override
     public List<Tag> findAllEntities() {
-        Connection connection = connectionPool.takeConnection();
-        try {
+        try (Connection connection = connectionPool.takeConnection()){
             return findAllTags(connection);
         } catch (SQLException e){
             logger.error(e);
             return new ArrayList<>();
-        } finally {
-            connectionPool.returnConnection(connection);
         }
     }
 
     @Override
     public Tag findEntityById(Integer id) {
-        Connection connection = connectionPool.takeConnection();
-        try {
+        try (Connection connection = connectionPool.takeConnection()){
             return findTagById(connection, id);
         } catch (SQLException e){
             logger.error(e);
             return null;
-        } finally {
-            connectionPool.returnConnection(connection);
         }
     }
 
@@ -101,14 +85,11 @@ public class TagDao implements Dao<Tag> {
      * @return tag with provided name, null otherwise
      */
     public Tag findTagByName(String name){
-        Connection connection = connectionPool.takeConnection();
-        try {
+        try (Connection connection = connectionPool.takeConnection()){
             return findTagByName(connection, name);
         } catch (SQLException e){
             logger.error(e);
             return null;
-        } finally {
-            connectionPool.returnConnection(connection);
         }
     }
 

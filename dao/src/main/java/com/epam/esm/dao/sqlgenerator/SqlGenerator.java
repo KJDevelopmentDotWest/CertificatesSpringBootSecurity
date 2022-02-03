@@ -15,7 +15,7 @@ public class SqlGenerator {
     private static final String SQL_LAST_UPDATE_DATE_COLUMN = "last_update_date";
     private static final String SQL_UPDATE_GIFT_CERTIFICATE_END = "WHERE id = ? AND ";
 
-    private static final String SQL_FIND_START = "SELECT id, name, description, price, duration, create_date, last_update_date FROM gift_certificate ";
+    private static final String SQL_FIND_START = "SELECT gift_certificate.id, gift_certificate.name, description, price, duration, create_date, last_update_date FROM gift_certificate ";
     private static final String SQL_FIND_WHERE = "WHERE ";
     private static final String SQL_FIND_JOIN_PART = "JOIN gift_certificate_to_tag ON gift_certificate.id = gift_certificate_id WHERE tag_id = ";
     private static final String SQL_AND = "AND ";
