@@ -182,7 +182,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         PreparedStatement preparedStatement = connection.prepareStatement(SQL_FIND_ALL_GIFT_CERTIFICATES);
         ResultSet resultSet = preparedStatement.executeQuery();
         while (resultSet.next()){
-            result.add(convertResultSetToUser(connection, resultSet));
+            result.add(convertResultSetToGiftCertificate(connection, resultSet));
         }
         preparedStatement.close();
         resultSet.close();
@@ -195,7 +195,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         ResultSet resultSet = preparedStatement.executeQuery();
         GiftCertificate giftCertificate;
         if (resultSet.next()){
-            giftCertificate =  convertResultSetToUser(connection, resultSet);
+            giftCertificate =  convertResultSetToGiftCertificate(connection, resultSet);
         } else {
             giftCertificate = null;
         }
@@ -298,7 +298,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         preparedStatement.close();
     }
 
-    private GiftCertificate convertResultSetToUser(Connection connection, ResultSet giftCertificateResultSet) throws SQLException{
+    private GiftCertificate convertResultSetToGiftCertificate(Connection connection, ResultSet giftCertificateResultSet) throws SQLException{
         TagDao tagDao = new TagDao();
 
         List<Integer> tagsId = findTagsIdByGiftCertificateId(connection, giftCertificateResultSet.getInt(1));
@@ -341,7 +341,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         ResultSet resultSet = preparedStatement.executeQuery();
 
         while (resultSet.next()){
-            result.add(convertResultSetToUser(connection, resultSet));
+            result.add(convertResultSetToGiftCertificate(connection, resultSet));
         }
         preparedStatement.close();
         resultSet.close();
