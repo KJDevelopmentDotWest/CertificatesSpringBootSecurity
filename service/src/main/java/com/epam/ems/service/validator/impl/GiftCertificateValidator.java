@@ -11,8 +11,8 @@ import java.util.Objects;
 
 public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
-    private static final Integer nameMinLength = 2;
-    private static final Integer nameMaxLength = 30;
+    private static final Integer NAME_MIN_LENGTH = 2;
+    private static final Integer NAME_MAX_LENGTH = 30;
 
     @Override
     public void validate(GiftCertificateDto value, Boolean checkId) throws ServiceException {
@@ -48,11 +48,11 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         if (Objects.isNull(name)){
             throw new ServiceException("name cannot be null");
         }
-        if (name.length() < nameMinLength) {
-            throw new ServiceException("name length cannot be less than " + nameMinLength);
+        if (name.length() < NAME_MIN_LENGTH) {
+            throw new ServiceException("name length cannot be less than " + NAME_MIN_LENGTH);
         }
-        if (name.length() > nameMaxLength) {
-            throw new ServiceException("name length cannot be more than " + nameMaxLength);
+        if (name.length() > NAME_MAX_LENGTH) {
+            throw new ServiceException("name length cannot be more than " + NAME_MAX_LENGTH);
         }
     }
 
@@ -84,11 +84,19 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         if (Objects.isNull(createDate)){
             throw new ServiceException("createDate cannot be null");
         }
+
+        if (createDate.isAfter(LocalDateTime.now())){
+            throw new ServiceException("createDate cannot point to future");
+        }
     }
 
-    private void validateLastUpdateDate(LocalDateTime lastUpdateTime) throws ServiceException{
-        if (Objects.isNull(lastUpdateTime)){
-            throw new ServiceException("lastUpdateTime cannot be null");
+    private void validateLastUpdateDate(LocalDateTime lastUpdateDate) throws ServiceException{
+        if (Objects.isNull(lastUpdateDate)){
+            throw new ServiceException("lastUpdateDate cannot be null");
+        }
+
+        if (lastUpdateDate.isAfter(LocalDateTime.now())){
+            throw new ServiceException("lastUpdateDate cannot point to future");
         }
     }
 
