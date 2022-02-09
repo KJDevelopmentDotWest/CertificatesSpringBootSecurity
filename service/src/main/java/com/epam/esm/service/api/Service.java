@@ -1,6 +1,6 @@
 package com.epam.esm.service.api;
 
-import com.epam.esm.service.dto.AbstractDto;
+import com.epam.esm.service.dto.Dto;
 import com.epam.esm.service.expecption.ServiceException;
 
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.List;
  *
  * @param <T> abstract dto that class will operate
  */
-public interface Service<T extends AbstractDto> {
+public interface Service<T extends Dto> {
     /**
      * @param value value to be saved
      * @return saved value

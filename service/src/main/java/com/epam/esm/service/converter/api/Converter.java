@@ -1,9 +1,9 @@
 package com.epam.esm.service.converter.api;
 
-import com.epam.esm.service.dto.AbstractDto;
+import com.epam.esm.service.dto.Dto;
 import com.epam.esm.dao.model.Entity;
 
-public interface Converter<T extends Entity, V extends AbstractDto> {
+public interface Converter<T extends Entity, V extends Dto> {
     /**
      *
      * @param value dto value to be converted

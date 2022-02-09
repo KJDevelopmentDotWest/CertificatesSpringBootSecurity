@@ -1,6 +1,6 @@
 package com.epam.esm.service.validator.api;
 
-import com.epam.esm.service.dto.AbstractDto;
+import com.epam.esm.service.dto.Dto;
 import com.epam.esm.service.expecption.ServiceException;
 
 import java.util.Objects;
@@ -9,7 +9,7 @@ import java.util.Objects;
  *
  * @param <T> abstract dto that converter will operate
  */
-public interface Validator<T extends AbstractDto> {
+public interface Validator<T extends Dto> {
 
     /**
      *

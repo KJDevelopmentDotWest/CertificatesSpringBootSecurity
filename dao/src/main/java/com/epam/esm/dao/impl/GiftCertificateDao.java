@@ -117,7 +117,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
             valuesToInsert.add(entity.getId());
 
-            return jdbcTemplate.update(SqlGenerator.getInstance().generateUpdateColString(entity), valuesToInsert.toArray()) != 0;
+            return jdbcTemplate.update(SqlGenerator.generateUpdateColString(entity), valuesToInsert.toArray()) != 0;
         } else {
             return false;
         }
@@ -174,7 +174,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
      * @return list of gift certificates that match parameters
      */
     public List<GiftCertificate> findGiftCertificatesWithParameters (Integer tagId, String namePart, String descriptionPart, SqlGenerator.SortByCode sortBy, Boolean ascending){
-        return jdbcTemplate.query(SqlGenerator.getInstance().generateSQLForGiftCertificateFindWithParameters(tagId, namePart, descriptionPart, sortBy, ascending),
+        return jdbcTemplate.query(SqlGenerator.generateSQLForGiftCertificateFindWithParameters(tagId, namePart, descriptionPart, sortBy, ascending),
                 new GiftCertificateMapper());
     }
 

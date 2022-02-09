@@ -1,12 +1,12 @@
 package com.epam.esm.dao.sqlgenerator;
 
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
+import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 
-public class SqlGenerator {
 
-    private static SqlGenerator instance;
+public class SqlGenerator {
 
     private static final String SQL_UPDATE_GIFT_CERTIFICATE_START = "UPDATE gift_certificate SET ";
     private static final String SQL_UPDATE_GIFT_CERTIFICATE_END = "WHERE id = ? ";
@@ -37,16 +37,7 @@ public class SqlGenerator {
     private static final String SQL_CREATE_DATE_COLUMN = "create_date";
     private static final String SQL_LAST_UPDATE_DATE_COLUMN = "last_update_date";
 
-    public static SqlGenerator getInstance() {
-        if (Objects.isNull(instance)){
-            instance = new SqlGenerator();
-        }
-        return instance;
-    }
-
-    private SqlGenerator(){}
-
-    public String generateSQLForGiftCertificateFindWithParameters(Integer tagId, String namePart, String descriptionPart, SortByCode sortBy, Boolean ascending){
+    public static String generateSQLForGiftCertificateFindWithParameters(Integer tagId, String namePart, String descriptionPart, SortByCode sortBy, Boolean ascending){
         StringBuilder generatedSQLQuery = new StringBuilder();
         generatedSQLQuery.append(SQL_FIND_START);
 
@@ -116,7 +107,7 @@ public class SqlGenerator {
         return generatedSQLQuery.toString();
     }
 
-    public String generateUpdateColString(GiftCertificate entity){
+    public static String generateUpdateColString(GiftCertificate entity){
         StringBuilder sqlUpdateString = new StringBuilder();
         Boolean isFirst = true;
 

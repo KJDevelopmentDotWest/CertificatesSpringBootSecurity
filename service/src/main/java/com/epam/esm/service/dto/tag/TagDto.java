@@ -1,20 +1,14 @@
 package com.epam.esm.service.dto.tag;
 
-import com.epam.esm.service.dto.AbstractDto;
+import com.epam.esm.service.dto.Dto;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode
 @Data
-public class TagDto extends AbstractDto {
+@AllArgsConstructor
+public class TagDto implements Dto {
+    Integer id;
     private String name;
-
-    public TagDto(String name) {
-        this.name = name;
-    }
-
-    public TagDto(Integer id,String name) {
-        this.id = id;
-        this.name = name;
-    }
 }
