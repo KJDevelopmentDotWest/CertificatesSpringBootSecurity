@@ -70,7 +70,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
             Integer tagIdToBeAdded = tag.getId();
 
-            if (Objects.isNull(tagDao.findEntityById(tag.getId())) || Objects.isNull(tag.getId())){
+            if (Objects.isNull(tagDao.findEntityById(tag.getId()))){
                 Tag foundByName = tagDao.findTagByName(tag.getName());
                 if (Objects.isNull(foundByName)){
                     tagIdToBeAdded = tagDao.saveEntity(tag).getId();
@@ -157,9 +157,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
         List<Integer> tagsId = jdbcTemplate.query(SQL_FIND_TAGS_ID_BY_GIFT_CERTIFICATE_ID, integerMapper, id);
 
-        List<Tag> tags  = new ArrayList<>();
-
-        tagsId.forEach(tagId -> tags.add(tagDao.findEntityById(tagId)));;
+        List<Tag> tags = tagDao.findTagsById(tagsId);
 
         if (Objects.nonNull(result)){
             result.setTags(tags);
@@ -205,7 +203,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
             Integer tagIdToBeAdded = tagId;
 
-            if (Objects.isNull(tagDao.findEntityById(tagId)) || Objects.isNull(tagId)){
+            if (Objects.isNull(tagDao.findEntityById(tagId))){
                 Tag tag = giftCertificate.getTags().stream().filter(innerTag -> Objects.equals(innerTag.getId(), tagId)).findFirst().orElse(null);
                 assert tag != null;
                 Tag foundByName = tagDao.findTagByName(tag.getName());

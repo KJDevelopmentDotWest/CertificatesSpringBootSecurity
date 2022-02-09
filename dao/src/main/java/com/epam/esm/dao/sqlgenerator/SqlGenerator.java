@@ -1,7 +1,6 @@
 package com.epam.esm.dao.sqlgenerator;
 
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
-import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 
@@ -12,7 +11,7 @@ public class SqlGenerator {
     private static final String SQL_UPDATE_GIFT_CERTIFICATE_END = "WHERE id = ? ";
 
     private static final String SQL_FIND_START = "SELECT gift_certificate.id, gift_certificate.name, description, price, duration, create_date, last_update_date FROM gift_certificate ";
-    private static final String SQL_FIND_WHERE = "WHERE ";
+    private static final String SQL_WHERE = "WHERE ";
     private static final String SQL_FIND_JOIN_PART = "JOIN gift_certificate_to_tag ON gift_certificate.id = gift_certificate_id WHERE tag_id = ";
     private static final String SQL_AND = "AND ";
     private static final String SQL_FIND_NAME_LIKE_START = "name LIKE '%";
@@ -29,7 +28,11 @@ public class SqlGenerator {
     private static final String QUESTION_SYMBOL = " ?";
     private static final String EQUAL_QUESTION_MARK_SYMBOL = " = ?";
 
+    private static final String SQL_FIND_TAG_START = "SELECT id, name FROM tag WHERE ";
 
+    private static final String SQL_OR = " OR ";
+
+    private static final String SQL_ID_COLUMN = "id";
     private static final String SQL_NAME_COLUMN = "name";
     private static final String SQL_DESCRIPTION_COLUMN = "description";
     private static final String SQL_PRICE_COLUMN = "price";
@@ -59,7 +62,7 @@ public class SqlGenerator {
             } else {
                 if (!Objects.isNull(namePart) ||
                         !Objects.isNull(descriptionPart)){
-                    generatedSQLQuery.append(SQL_FIND_WHERE);
+                    generatedSQLQuery.append(SQL_WHERE);
                 }
             }
 
@@ -176,6 +179,22 @@ public class SqlGenerator {
         sqlUpdateString.append(SQL_UPDATE_GIFT_CERTIFICATE_END);
 
         return sqlUpdateString.toString();
+    }
+
+    public static String generateFindTagsByIdArray(Integer amountOfId){
+        StringBuilder resultSql = new StringBuilder();
+
+        resultSql.append(SQL_FIND_TAG_START);
+        resultSql.append(SQL_ID_COLUMN);
+        resultSql.append(EQUAL_QUESTION_MARK_SYMBOL);
+
+        for (int i = 0; i < amountOfId - 1; i++){
+            resultSql.append(SQL_OR);
+            resultSql.append(SQL_ID_COLUMN);
+            resultSql.append(EQUAL_QUESTION_MARK_SYMBOL);
+        }
+
+        return resultSql.toString();
     }
 
     public enum SortByCode{

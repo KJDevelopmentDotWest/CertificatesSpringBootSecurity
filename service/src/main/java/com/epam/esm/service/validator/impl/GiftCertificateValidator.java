@@ -37,6 +37,13 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
     }
 
+    public void validateTagsId(List<TagDto> tags) throws ServiceException{
+        Validator<TagDto> tagValidator = new TagValidator();
+        for (TagDto tagDto : tags){
+            tagValidator.validate(tagDto, true);
+        }
+    }
+
     private void validateId(Integer id) throws ServiceException{
         if (Objects.isNull(id)){
             throw new ServiceException("id cannot be null");
@@ -118,9 +125,6 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         if (Objects.isNull(tags)){
             throw new ServiceException("tags list cannot be null");
         }
-        Validator<TagDto> tagValidator = new TagValidator();
-        for (TagDto tagDto : tags){
-            tagValidator.validate(tagDto, true);
-        }
+        validateTagsId(tags);
     }
 }

@@ -23,13 +23,13 @@ import java.util.stream.Collectors;
 public class GiftCertificateService implements Service<GiftCertificateDto> {
 
     @Autowired
-    Dao<GiftCertificate> dao;
+    GiftCertificateDao dao;
 
     @Autowired
-    Converter<GiftCertificate, GiftCertificateDto> converter;
+    GiftCertificateConverter converter;
 
     @Autowired
-    Validator<GiftCertificateDto> validator;
+    GiftCertificateValidator validator;
 
     @Override
     public GiftCertificateDto create(GiftCertificateDto value) throws ServiceException {
@@ -46,6 +46,9 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
     @Override
     public Boolean update(GiftCertificateDto value) throws ServiceException {
         validator.validateIdNotNull(value.getId());
+        if (Objects.nonNull(value.getTags())){
+            validator.validateTagsId(value.getTags());
+        }
         return dao.updateEntity(converter.convert(value));
     }
 
@@ -89,7 +92,7 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
      * @throws ServiceException if there is no gift certificates with provided parameters
      */
     public List<GiftCertificateDto> getAllWithParameters(Integer tagId, String namePart, String descriptionPart, SqlGenerator.SortByCode sortBy, Boolean ascending) throws ServiceException {
-        List<GiftCertificate> daoResult = ((GiftCertificateDao)dao).findGiftCertificatesWithParameters(tagId, namePart, descriptionPart, sortBy, ascending);
+        List<GiftCertificate> daoResult = dao.findGiftCertificatesWithParameters(tagId, namePart, descriptionPart, sortBy, ascending);
 
         if (daoResult.isEmpty()){
             throw new ServiceException("there is no gift certificates with provided parameters");

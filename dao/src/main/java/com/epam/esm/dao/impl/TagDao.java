@@ -3,6 +3,7 @@ package com.epam.esm.dao.impl;
 import com.epam.esm.dao.api.Dao;
 import com.epam.esm.dao.mapper.TagMapper;
 import com.epam.esm.dao.model.tag.Tag;
+import com.epam.esm.dao.sqlgenerator.SqlGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.PreparedStatement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,6 +37,8 @@ public class TagDao implements Dao<Tag> {
     private static final String SQL_FIND_TAG_BY_ID = "SELECT id, name FROM tag WHERE id = ?";
     private static final String SQL_FIND_TAG_BY_NAME = "SELECT id, name FROM tag WHERE name = ?";
 
+    private final TagMapper tagMapper = new TagMapper();
+
     @Override
     public Tag saveEntity(Tag entity) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -45,7 +49,6 @@ public class TagDao implements Dao<Tag> {
             return preparedStatement;
         }, keyHolder);
 
-        //todo generated keys always null
         System.out.println(keyHolder.getKey());
 
         return findEntityById((Integer) keyHolder.getKey());
@@ -69,12 +72,12 @@ public class TagDao implements Dao<Tag> {
 
     @Override
     public List<Tag> findAllEntities() {
-        return jdbcTemplate.query(SQL_FIND_ALL_TAGS, new TagMapper());
+        return jdbcTemplate.query(SQL_FIND_ALL_TAGS, tagMapper);
     }
 
     @Override
     public Tag findEntityById(Integer id) {
-        return jdbcTemplate.query(SQL_FIND_TAG_BY_ID, new TagMapper(), id).stream().findAny().orElse(null);
+        return jdbcTemplate.query(SQL_FIND_TAG_BY_ID, tagMapper, id).stream().findAny().orElse(null);
     }
 
     /**
@@ -83,6 +86,14 @@ public class TagDao implements Dao<Tag> {
      * @return tag with provided name, null otherwise
      */
     public Tag findTagByName(String name){
-        return jdbcTemplate.query(SQL_FIND_TAG_BY_NAME, new TagMapper(), name).stream().findAny().orElse(null);
+        return jdbcTemplate.query(SQL_FIND_TAG_BY_NAME, tagMapper, name).stream().findAny().orElse(null);
+    }
+
+    public List<Tag> findTagsById(List<Integer> ids){
+        if (!ids.isEmpty()){
+            return jdbcTemplate.query(SqlGenerator.generateFindTagsByIdArray(ids.size()), tagMapper, ids.toArray());
+        } else {
+            return new ArrayList<>();
+        }
     }
 }
