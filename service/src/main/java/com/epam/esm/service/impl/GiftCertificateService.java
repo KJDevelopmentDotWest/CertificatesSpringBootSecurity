@@ -45,7 +45,7 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
 
     @Override
     public Boolean update(GiftCertificateDto value) throws ServiceException {
-        validator.validate(value, true);
+        validator.validateIdNotNull(value.getId());
         return dao.updateEntity(converter.convert(value));
     }
 

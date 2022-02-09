@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.PreparedStatement;
 import java.util.List;
@@ -60,6 +61,7 @@ public class TagDao implements Dao<Tag> {
     }
 
     @Override
+    @Transactional
     public Boolean deleteEntity(Integer id) {
         jdbcTemplate.update(SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_TAG_ID, id);
         return jdbcTemplate.update(SQL_DELETE_TAG_BY_ID, id) != 0;

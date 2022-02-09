@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
@@ -48,6 +49,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     private final IntegerMapper integerMapper = new IntegerMapper();
 
     @Override
+    @Transactional
     public GiftCertificate saveEntity(GiftCertificate entity) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -84,6 +86,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     }
 
     @Override
+    @Transactional
     public Boolean updateEntity(GiftCertificate entity) {
 
         if (Objects.nonNull(entity.getTags())){
@@ -124,6 +127,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     }
 
     @Override
+    @Transactional
     public Boolean deleteEntity(Integer id) {
         jdbcTemplate.update(SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_GIFT_CERTIFICATE_ID, id);
         return jdbcTemplate.update(SQL_DELETE_GIFT_CERTIFICATE_BY_ID, id) != 0;
