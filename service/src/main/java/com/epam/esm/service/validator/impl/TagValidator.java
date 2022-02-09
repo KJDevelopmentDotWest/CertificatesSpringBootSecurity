@@ -3,13 +3,15 @@ package com.epam.esm.service.validator.impl;
 import com.epam.esm.service.dto.tag.TagDto;
 import com.epam.esm.service.expecption.ServiceException;
 import com.epam.esm.service.validator.api.Validator;
+import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 
+@Component
 public class TagValidator implements Validator<TagDto> {
 
-    private static final Integer nameMinLength = 1;
-    private static final Integer nameMaxLength = 10;
+    private static final Integer NAME_MIN_LENGTH = 1;
+    private static final Integer NAME_MAX_LENGTH = 10;
 
     @Override
     public void validate(TagDto value, Boolean checkId) throws ServiceException {
@@ -37,11 +39,11 @@ public class TagValidator implements Validator<TagDto> {
         if (Objects.isNull(name)){
             throw new ServiceException("name cannot be null");
         }
-        if (name.length() < nameMinLength) {
-            throw new ServiceException("name length cannot be less than " + nameMinLength);
+        if (name.length() < NAME_MIN_LENGTH) {
+            throw new ServiceException("name length cannot be less than " + NAME_MIN_LENGTH);
         }
-        if (name.length() > nameMaxLength) {
-            throw new ServiceException("name length cannot be more than " + nameMaxLength);
+        if (name.length() > NAME_MAX_LENGTH) {
+            throw new ServiceException("name length cannot be more than " + NAME_MAX_LENGTH);
         }
     }
 }

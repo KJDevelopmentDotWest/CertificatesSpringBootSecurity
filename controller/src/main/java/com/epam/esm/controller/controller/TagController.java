@@ -1,9 +1,7 @@
 package com.epam.esm.controller.controller;
 
-import com.epam.esm.service.dto.giftcertificate.GiftCertificateDto;
 import com.epam.esm.service.dto.tag.TagDto;
 import com.epam.esm.service.expecption.ServiceException;
-import com.epam.esm.service.impl.GiftCertificateService;
 import com.epam.esm.service.impl.TagService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

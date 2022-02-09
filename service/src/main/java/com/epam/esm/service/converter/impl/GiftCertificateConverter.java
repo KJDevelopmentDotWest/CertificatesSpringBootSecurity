@@ -5,11 +5,13 @@ import com.epam.esm.service.dto.giftcertificate.GiftCertificateDto;
 import com.epam.esm.service.dto.tag.TagDto;
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import com.epam.esm.dao.model.tag.Tag;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Component
 public class GiftCertificateConverter implements Converter<GiftCertificate, GiftCertificateDto> {
     @Override
     public GiftCertificate convert(GiftCertificateDto value) {

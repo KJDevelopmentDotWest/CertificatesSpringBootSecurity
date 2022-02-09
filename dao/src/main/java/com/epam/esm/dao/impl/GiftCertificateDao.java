@@ -1,7 +1,6 @@
 package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
-import com.epam.esm.dao.config.SpringConfig;
 import com.epam.esm.dao.mapper.GiftCertificateMapper;
 import com.epam.esm.dao.mapper.IntegerMapper;
 import com.epam.esm.dao.model.tag.Tag;
@@ -25,6 +24,12 @@ import java.util.Objects;
 @Component
 public class GiftCertificateDao implements Dao<GiftCertificate> {
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private TagDao tagDao;
+
     private static final Logger logger = LogManager.getLogger(GiftCertificateDao.class);
 
     private static final String SQL_SAVE_GIFT_CERTIFICATE = "INSERT INTO gift_certificate (name, description, price, duration, create_date, last_update_date) VALUES (?, ?, ?, ?, ?, ?)";
@@ -41,15 +46,6 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     private final GiftCertificateMapper mapper = new GiftCertificateMapper();
     private final IntegerMapper integerMapper = new IntegerMapper();
-
-    //todo i don't know why autowired annotation doesn't work
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private TagDao tagDao;
-
-
 
     @Override
     public GiftCertificate saveEntity(GiftCertificate entity) {

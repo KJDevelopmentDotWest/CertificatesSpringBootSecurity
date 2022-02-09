@@ -11,6 +11,7 @@ import com.epam.esm.dao.api.Dao;
 import com.epam.esm.dao.impl.GiftCertificateDao;
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import com.epam.esm.dao.sqlgenerator.SqlGenerator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -21,9 +22,14 @@ import java.util.stream.Collectors;
 @Component
 public class GiftCertificateService implements Service<GiftCertificateDto> {
 
-    Dao<GiftCertificate> dao = new GiftCertificateDao();
-    Converter<GiftCertificate, GiftCertificateDto> converter = new GiftCertificateConverter();
-    Validator<GiftCertificateDto> validator = new GiftCertificateValidator();
+    @Autowired
+    Dao<GiftCertificate> dao;
+
+    @Autowired
+    Converter<GiftCertificate, GiftCertificateDto> converter;
+
+    @Autowired
+    Validator<GiftCertificateDto> validator;
 
     @Override
     public GiftCertificateDto create(GiftCertificateDto value) throws ServiceException {

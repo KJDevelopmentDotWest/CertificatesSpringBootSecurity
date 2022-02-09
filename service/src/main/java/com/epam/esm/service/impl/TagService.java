@@ -10,6 +10,7 @@ import com.epam.esm.service.validator.impl.TagValidator;
 import com.epam.esm.dao.api.Dao;
 import com.epam.esm.dao.impl.TagDao;
 import com.epam.esm.dao.model.tag.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -20,9 +21,14 @@ import java.util.stream.Collectors;
 @Component
 public class TagService implements Service<TagDto> {
 
-    Dao<Tag> dao = new TagDao();
-    Converter<Tag, TagDto> converter = new TagConverter();
-    Validator<TagDto> validator = new TagValidator();
+    @Autowired
+    Dao<Tag> dao;
+
+    @Autowired
+    Converter<Tag, TagDto> converter;
+
+    @Autowired
+    Validator<TagDto> validator;
 
     /**
      *

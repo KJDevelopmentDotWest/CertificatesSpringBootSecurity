@@ -4,11 +4,13 @@ import com.epam.esm.service.dto.giftcertificate.GiftCertificateDto;
 import com.epam.esm.service.dto.tag.TagDto;
 import com.epam.esm.service.expecption.ServiceException;
 import com.epam.esm.service.validator.api.Validator;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
+@Component
 public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
     private static final Integer NAME_MIN_LENGTH = 2;

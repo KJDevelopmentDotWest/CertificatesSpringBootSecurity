@@ -1,7 +1,7 @@
 package com.epam.esm.dao.config;
 
+import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -11,7 +11,7 @@ import javax.sql.DataSource;
 
 @Configuration
 @Component
-public class SpringConfig{
+public class SpringConfig {
 
     private static final String DB_URL = "jdbc:postgresql://127.0.0.1:5432/certificates";
     private static final String USER = "postgres";
@@ -34,5 +34,4 @@ public class SpringConfig{
     public JdbcTemplate jdbcTemplate(){
         return new JdbcTemplate(dataSource());
     }
-
 }

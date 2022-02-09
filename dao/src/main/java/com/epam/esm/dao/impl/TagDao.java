@@ -1,7 +1,6 @@
 package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
-import com.epam.esm.dao.config.SpringConfig;
 import com.epam.esm.dao.mapper.TagMapper;
 import com.epam.esm.dao.model.tag.Tag;
 import org.apache.logging.log4j.LogManager;
@@ -19,6 +18,9 @@ import java.util.Objects;
 @Component
 public class TagDao implements Dao<Tag> {
 
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+
     private static final Logger logger = LogManager.getLogger(TagDao.class);
 
     private static final String SQL_SAVE_TAG = "INSERT INTO tag (name) VALUES (?)";
@@ -31,14 +33,6 @@ public class TagDao implements Dao<Tag> {
     private static final String SQL_FIND_ALL_TAGS = "SELECT id, name FROM tag";
     private static final String SQL_FIND_TAG_BY_ID = "SELECT id, name FROM tag WHERE id = ?";
     private static final String SQL_FIND_TAG_BY_NAME = "SELECT id, name FROM tag WHERE name = ?";
-
-    //todo i don't know why autowired annotation doesn't work
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    public TagDao() {
-        jdbcTemplate = new SpringConfig().jdbcTemplate();
-    }
 
     @Override
     public Tag saveEntity(Tag entity) {

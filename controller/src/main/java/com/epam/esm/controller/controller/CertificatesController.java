@@ -45,7 +45,7 @@ public class CertificatesController {
     }
 
     @PutMapping(value = "/{id}")
-    public void create(@PathVariable("id") Integer id, @RequestParam String giftCertificateJson) throws ServiceException, JsonProcessingException {
+    public void update(@PathVariable("id") Integer id, @RequestParam String giftCertificateJson) throws ServiceException, JsonProcessingException {
         GiftCertificateDto giftCertificate = objectMapper.readValue(giftCertificateJson, GiftCertificateDto.class);
         giftCertificate.setId(id);
         service.update(giftCertificate);
