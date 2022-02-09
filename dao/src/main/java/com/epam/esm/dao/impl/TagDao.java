@@ -1,82 +1,84 @@
 package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
-import com.epam.esm.dao.connectionpool.DBCP;
+import com.epam.esm.dao.config.SpringConfig;
+import com.epam.esm.dao.mapper.TagMapper;
 import com.epam.esm.dao.model.tag.Tag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Component;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+@Component
 public class TagDao implements Dao<Tag> {
 
     private static final Logger logger = LogManager.getLogger(TagDao.class);
 
     private static final String SQL_SAVE_TAG = "INSERT INTO tag (name) VALUES (?)";
 
-    private static final String SQL_UPDATE_TAG_BY_ID = "UPDATE tag SET name = ? WHERE id = ? AND name != ?";
+    private static final String SQL_UPDATE_TAG_BY_ID = "UPDATE tag SET name = ? WHERE id = ?";
 
     private static final String SQL_DELETE_TAG_BY_ID = "DELETE FROM tag WHERE id = ?";
+    private static final String SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_TAG_ID = "DELETE FROM gift_certificate_to_tag WHERE tag_id = ?";
 
     private static final String SQL_FIND_ALL_TAGS = "SELECT id, name FROM tag";
     private static final String SQL_FIND_TAG_BY_ID = "SELECT id, name FROM tag WHERE id = ?";
     private static final String SQL_FIND_TAG_BY_NAME = "SELECT id, name FROM tag WHERE name = ?";
 
-    private final DBCP connectionPool = DBCP.getInstance();
+    //todo i don't know why autowired annotation doesn't work
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    public TagDao() {
+        jdbcTemplate = new SpringConfig().jdbcTemplate();
+    }
 
     @Override
     public Tag saveEntity(Tag entity) {
-        try (Connection connection = connectionPool.takeConnection()){
-            return saveTag(connection, entity);
-        } catch (SQLException e){
-            logger.error(e);
-            return null;
-        }
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement preparedStatement = connection.prepareStatement(SQL_SAVE_TAG, new String[] {"id"});
+            preparedStatement.setString(1, entity.getName());
+            return preparedStatement;
+        }, keyHolder);
+
+        //todo generated keys always null
+        System.out.println(keyHolder.getKey());
+
+        return findEntityById((Integer) keyHolder.getKey());
     }
 
     @Override
     public Boolean updateEntity(Tag entity) {
-        try (Connection connection = connectionPool.takeConnection()){
-            return updateTag(connection, entity);
-        } catch (SQLException e){
-            logger.error(e);
+        if (Objects.nonNull(entity.getName())){
+            return jdbcTemplate.update(SQL_UPDATE_TAG_BY_ID, entity.getName(), entity.getId(), entity.getName()) != 0;
+        } else {
             return false;
         }
     }
 
     @Override
-    public Boolean deleteEntity(Tag entity) {
-        try (Connection connection = connectionPool.takeConnection()){
-            return deleteTag(connection, entity.id());
-        } catch (SQLException e){
-            logger.error(e);
-            return false;
-        }
+    public Boolean deleteEntity(Integer id) {
+        jdbcTemplate.update(SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_TAG_ID, id);
+        return jdbcTemplate.update(SQL_DELETE_TAG_BY_ID, id) != 0;
     }
 
     @Override
     public List<Tag> findAllEntities() {
-        try (Connection connection = connectionPool.takeConnection()){
-            return findAllTags(connection);
-        } catch (SQLException e){
-            logger.error(e);
-            return new ArrayList<>();
-        }
+        return jdbcTemplate.query(SQL_FIND_ALL_TAGS, new TagMapper());
     }
 
     @Override
     public Tag findEntityById(Integer id) {
-        try (Connection connection = connectionPool.takeConnection()){
-            return findTagById(connection, id);
-        } catch (SQLException e){
-            logger.error(e);
-            return null;
-        }
+        return jdbcTemplate.query(SQL_FIND_TAG_BY_ID, new TagMapper(), id).stream().findAny().orElse(null);
     }
 
     /**
@@ -85,87 +87,6 @@ public class TagDao implements Dao<Tag> {
      * @return tag with provided name, null otherwise
      */
     public Tag findTagByName(String name){
-        try (Connection connection = connectionPool.takeConnection()){
-            return findTagByName(connection, name);
-        } catch (SQLException e){
-            logger.error(e);
-            return null;
-        }
-    }
-
-    private Tag saveTag(Connection connection, Tag tag) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_SAVE_TAG, new String[]{"id"});
-        preparedStatement.setString(1, tag.name());
-        preparedStatement.executeUpdate();
-        ResultSet resultSet = preparedStatement.getGeneratedKeys();
-        resultSet.next();
-        Integer id = resultSet.getInt(1);
-        preparedStatement.close();
-        resultSet.close();
-        return new Tag(id, tag.name());
-    }
-
-    private Boolean updateTag(Connection connection, Tag tag) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_UPDATE_TAG_BY_ID);
-        preparedStatement.setString(1, tag.name());
-        preparedStatement.setInt(2, tag.id());
-        preparedStatement.setString(3, tag.name());
-        preparedStatement.executeUpdate();
-        preparedStatement.close();
-        return true;
-    }
-
-    private Boolean deleteTag(Connection connection, Integer id) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_DELETE_TAG_BY_ID);
-        preparedStatement.setInt(1, id);
-        preparedStatement.executeUpdate();
-        preparedStatement.close();
-        return true;
-    }
-
-    private List<Tag> findAllTags(Connection connection) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_FIND_ALL_TAGS);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        List<Tag> tags = new ArrayList<>();
-        while (resultSet.next()){
-            tags.add(convertResultSetToTag(resultSet));
-        }
-        preparedStatement.close();
-        resultSet.close();
-        return tags;
-    }
-
-    private Tag findTagById(Connection connection, Integer id) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_FIND_TAG_BY_ID);
-        preparedStatement.setInt(1, id);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        Tag tag;
-        if (resultSet.next()){
-            tag = convertResultSetToTag(resultSet);
-        } else {
-            tag = null;
-        }
-        preparedStatement.close();
-        resultSet.close();
-        return tag;
-    }
-
-    private Tag findTagByName(Connection connection, String name) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_FIND_TAG_BY_NAME);
-        preparedStatement.setString(1, name);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        Tag tag;
-        if (resultSet.next()){
-            tag = convertResultSetToTag(resultSet);
-        } else {
-            tag = null;
-        }
-        preparedStatement.close();
-        resultSet.close();
-        return tag;
-    }
-
-    private Tag convertResultSetToTag(ResultSet resultSet) throws SQLException {
-        return new Tag(resultSet.getInt(1), resultSet.getString(2));
+        return jdbcTemplate.query(SQL_FIND_TAG_BY_NAME, new TagMapper(), name).stream().findAny().orElse(null);
     }
 }

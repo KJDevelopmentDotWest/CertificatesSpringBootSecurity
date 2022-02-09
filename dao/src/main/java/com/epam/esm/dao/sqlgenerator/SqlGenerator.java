@@ -1,5 +1,7 @@
 package com.epam.esm.dao.sqlgenerator;
 
+import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
+
 import java.util.Objects;
 
 public class SqlGenerator {
@@ -7,13 +9,7 @@ public class SqlGenerator {
     private static SqlGenerator instance;
 
     private static final String SQL_UPDATE_GIFT_CERTIFICATE_START = "UPDATE gift_certificate SET ";
-    private static final String SQL_NAME_COLUMN = "name";
-    private static final String SQL_DESCRIPTION_COLUMN = "description";
-    private static final String SQL_PRICE_COLUMN = "price";
-    private static final String SQL_DURATION_COLUMN = "duration";
-    private static final String SQL_CREATE_DATE_COLUMN = "create_date";
-    private static final String SQL_LAST_UPDATE_DATE_COLUMN = "last_update_date";
-    private static final String SQL_UPDATE_GIFT_CERTIFICATE_END = "WHERE id = ? AND ";
+    private static final String SQL_UPDATE_GIFT_CERTIFICATE_END = "WHERE id = ? ";
 
     private static final String SQL_FIND_START = "SELECT gift_certificate.id, gift_certificate.name, description, price, duration, create_date, last_update_date FROM gift_certificate ";
     private static final String SQL_FIND_WHERE = "WHERE ";
@@ -31,6 +27,15 @@ public class SqlGenerator {
     private static final String EQUAL_SYMBOL = " = ";
     private static final String NOT_EQUAL_SYMBOL = " != ";
     private static final String QUESTION_SYMBOL = " ?";
+    private static final String EQUAL_QUESTION_MARK_SYMBOL = " = ?";
+
+
+    private static final String SQL_NAME_COLUMN = "name";
+    private static final String SQL_DESCRIPTION_COLUMN = "description";
+    private static final String SQL_PRICE_COLUMN = "price";
+    private static final String SQL_DURATION_COLUMN = "duration";
+    private static final String SQL_CREATE_DATE_COLUMN = "create_date";
+    private static final String SQL_LAST_UPDATE_DATE_COLUMN = "last_update_date";
 
     public static SqlGenerator getInstance() {
         if (Objects.isNull(instance)){
@@ -111,16 +116,74 @@ public class SqlGenerator {
         return generatedSQLQuery.toString();
     }
 
-    public String generateUpdateColString(String columnName){
+    public String generateUpdateColString(GiftCertificate entity){
         StringBuilder sqlUpdateString = new StringBuilder();
+        Boolean isFirst = true;
+
         sqlUpdateString.append(SQL_UPDATE_GIFT_CERTIFICATE_START);
-        sqlUpdateString.append(columnName);
-        sqlUpdateString.append(EQUAL_SYMBOL);
-        sqlUpdateString.append(QUESTION_SYMBOL);
+
+        if (Objects.nonNull(entity.getName())){
+            isFirst = false;
+            sqlUpdateString.append(SQL_NAME_COLUMN);
+            sqlUpdateString.append(EQUAL_QUESTION_MARK_SYMBOL);
+        }
+
+        if (Objects.nonNull(entity.getDescription())){
+
+            if (!isFirst){
+                sqlUpdateString.append(COMMA_SYMBOL);
+                isFirst = false;
+            }
+
+            sqlUpdateString.append(SQL_DESCRIPTION_COLUMN);
+            sqlUpdateString.append(EQUAL_QUESTION_MARK_SYMBOL);
+
+        }
+
+        if (Objects.nonNull(entity.getPrice())){
+
+            if (!isFirst){
+                sqlUpdateString.append(COMMA_SYMBOL);
+                isFirst = false;
+            }
+
+            sqlUpdateString.append(SQL_PRICE_COLUMN);
+            sqlUpdateString.append(EQUAL_QUESTION_MARK_SYMBOL);
+
+        }
+
+        if (Objects.nonNull(entity.getDuration())){
+
+            if (!isFirst){
+                sqlUpdateString.append(COMMA_SYMBOL);
+                isFirst = false;
+            }
+
+            sqlUpdateString.append(SQL_DURATION_COLUMN);
+            sqlUpdateString.append(EQUAL_QUESTION_MARK_SYMBOL);
+
+        }
+
+        if (Objects.nonNull(entity.getCreateDate())){
+
+            if (!isFirst){
+                sqlUpdateString.append(COMMA_SYMBOL);
+                isFirst = false;
+            }
+
+            sqlUpdateString.append(SQL_CREATE_DATE_COLUMN);
+            sqlUpdateString.append(EQUAL_QUESTION_MARK_SYMBOL);
+
+        }
+
+        if (!isFirst){
+            sqlUpdateString.append(COMMA_SYMBOL);
+            sqlUpdateString.append(SQL_LAST_UPDATE_DATE_COLUMN);
+            sqlUpdateString.append(EQUAL_QUESTION_MARK_SYMBOL);
+        }
+
         sqlUpdateString.append(SQL_UPDATE_GIFT_CERTIFICATE_END);
-        sqlUpdateString.append(columnName);
-        sqlUpdateString.append(NOT_EQUAL_SYMBOL);
-        sqlUpdateString.append(QUESTION_SYMBOL);
+
         return sqlUpdateString.toString();
     }
 

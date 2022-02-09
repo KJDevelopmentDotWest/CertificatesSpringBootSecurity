@@ -14,7 +14,7 @@ class GiftCertificateDaoTest {
     @Test
     void saveTest() {
         Tag tag1 = new Tag(1, "firstTag");
-        Tag tag2 = new Tag(2, "secondTag");
+        Tag tag2 = new Tag(9, "supeasfr new tag");
         GiftCertificate giftCertificate = new GiftCertificate(null, "name", "description", 200.1, 200L,
                 LocalDateTime.now(), LocalDateTime.now().plusDays(110), List.of(tag1, tag2));
         GiftCertificateDao dao = new GiftCertificateDao();
@@ -31,16 +31,16 @@ class GiftCertificateDaoTest {
     @Test
     void findByIdTest(){
         GiftCertificateDao dao = new GiftCertificateDao();
-        System.out.println(dao.findEntityById(10));
+        System.out.println(dao.findEntityById(14));
     }
 
     @Test
     void updateEntityTest(){
         GiftCertificateDao dao = new GiftCertificateDao();
         Tag tag1 = new Tag(1, "firstTag");
-        Tag tag3 = new Tag(3, "secondTag");
-        GiftCertificate giftCertificate = new GiftCertificate(11, "unchangedname", "changeddescription", 200.1, 200L,
-                LocalDateTime.now(), LocalDateTime.now().plusDays(110), List.of(tag1, tag3));
+        Tag tag3 = new Tag(6, "supeasfr new tag");
+        GiftCertificate giftCertificate = new GiftCertificate(11, "name", null, null, 250L,
+                null, null, List.of(tag1, tag3));
         dao.updateEntity(giftCertificate);
         System.out.println(dao.findEntityById(11));
     }

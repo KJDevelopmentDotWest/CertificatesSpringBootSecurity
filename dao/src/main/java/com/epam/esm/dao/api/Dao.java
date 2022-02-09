@@ -14,7 +14,7 @@ public interface Dao<T extends Entity> {
     T saveEntity(T entity);
 
     /**
-     *
+     *  updates entity with entity.id() null fields won't be updated
      * @param entity entity to be updated
      * @return true if entity updated successfully, false otherwise
      */
@@ -22,10 +22,10 @@ public interface Dao<T extends Entity> {
 
     /**
      *
-     * @param entity entity to be deleted
+     * @param id entity to be deleted
      * @return true if entity deleted successfully, false otherwise
      */
-    Boolean deleteEntity(T entity);
+    Boolean deleteEntity(Integer id);
 
     /**
      *

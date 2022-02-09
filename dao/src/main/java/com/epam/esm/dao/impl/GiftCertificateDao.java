@@ -1,21 +1,28 @@
 package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
-import com.epam.esm.dao.connectionpool.DBCP;
+import com.epam.esm.dao.config.SpringConfig;
+import com.epam.esm.dao.mapper.GiftCertificateMapper;
+import com.epam.esm.dao.mapper.IntegerMapper;
 import com.epam.esm.dao.model.tag.Tag;
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import com.epam.esm.dao.sqlgenerator.SqlGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Component;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+@Component
 public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     private static final Logger logger = LogManager.getLogger(GiftCertificateDao.class);
@@ -32,78 +39,133 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     private static final String SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_GIFT_CERTIFICATE_ID = "DELETE FROM gift_certificate_to_tag WHERE gift_certificate_id = ?";
     private static final String SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_GIFT_CERTIFICATE_ID_AND_TAG_ID = "DELETE FROM gift_certificate_to_tag WHERE gift_certificate_id = ? AND tag_id = ?";
 
-    private static final String SQL_NAME_COLUMN = "name";
-    private static final String SQL_DESCRIPTION_COLUMN = "description";
-    private static final String SQL_PRICE_COLUMN = "price";
-    private static final String SQL_DURATION_COLUMN = "duration";
-    private static final String SQL_CREATE_DATE_COLUMN = "create_date";
-    private static final String SQL_LAST_UPDATE_DATE_COLUMN = "last_update_date";
+    private final GiftCertificateMapper mapper = new GiftCertificateMapper();
+    private final IntegerMapper integerMapper = new IntegerMapper();
 
-    private final DBCP connectionPool = DBCP.getInstance();
+    //todo i don't know why autowired annotation doesn't work
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private TagDao tagDao;
+
+
 
     @Override
     public GiftCertificate saveEntity(GiftCertificate entity) {
-        try (Connection connection = connectionPool.takeConnection()){
-            connection.setAutoCommit(false);
-            GiftCertificate giftCertificate = saveGiftCertificate(connection, entity);
-            saveGiftCertificateToTagEntries(connection, giftCertificate);
-            connection.commit();
-            connection.setAutoCommit(true);
-            return giftCertificate;
-        } catch (SQLException e) {
-            logger.error(e);
-            return null;
-        }
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement preparedStatement = connection.prepareStatement(SQL_SAVE_GIFT_CERTIFICATE, new String[] {"id"});
+            preparedStatement.setString(1, entity.getName());
+            preparedStatement.setString(2, entity.getDescription());
+            preparedStatement.setDouble(3, entity.getPrice());
+            preparedStatement.setLong(4, entity.getDuration());
+            preparedStatement.setTimestamp(5, Timestamp.valueOf(entity.getCreateDate()));
+            preparedStatement.setTimestamp(6, Timestamp.valueOf(entity.getLastUpdateDate()));
+            return preparedStatement;
+        }, keyHolder);
+
+        Integer generatedEntityId = keyHolder.getKeyAs(Integer.class);
+
+        entity.getTags().forEach(tag -> {
+
+            Integer tagIdToBeAdded = tag.getId();
+
+            if (Objects.isNull(tagDao.findEntityById(tag.getId())) || Objects.isNull(tag.getId())){
+                Tag foundByName = tagDao.findTagByName(tag.getName());
+                if (Objects.isNull(foundByName)){
+                    tagIdToBeAdded = tagDao.saveEntity(tag).getId();
+                } else {
+                    tagIdToBeAdded = foundByName.getId();
+                }
+            }
+
+            jdbcTemplate.update(SQL_SAVE_GIFT_CERTIFICATE_TO_TAG_ENTRY, generatedEntityId, tagIdToBeAdded);
+        });
+
+        return findEntityById(generatedEntityId);
     }
 
     @Override
     public Boolean updateEntity(GiftCertificate entity) {
-        try (Connection connection = connectionPool.takeConnection()){
-            connection.setAutoCommit(false);
-            Boolean result = updateGiftCertificate(connection, entity);
-            updateGiftCertificateToTagEntries(connection, entity);
-            connection.commit();
-            connection.setAutoCommit(true);
-            return result;
-        } catch (SQLException e) {
-            logger.error(e);
-            return null;
-        }
-    }
 
-    @Override
-    public Boolean deleteEntity(GiftCertificate entity) {
-        try (Connection connection = connectionPool.takeConnection()){
-            connection.setAutoCommit(false);
-            Boolean isDeleted = deleteGiftCertificateById(connection, entity.id());
-            connection.commit();
-            connection.setAutoCommit(true);
-            return isDeleted;
-        } catch (SQLException e){
-            logger.error(e);
+        if (Objects.nonNull(entity.getTags())){
+            updateGiftCertificateToTagEntries(entity);
+        }
+
+        List<Object> valuesToInsert = new ArrayList<>();
+
+        if (Objects.nonNull(entity.getName())){
+            valuesToInsert.add(entity.getName());
+        }
+
+        if (Objects.nonNull(entity.getDescription())){
+            valuesToInsert.add(entity.getDescription());
+        }
+
+        if (Objects.nonNull(entity.getPrice())){
+            valuesToInsert.add(entity.getPrice());
+        }
+
+        if (Objects.nonNull(entity.getDuration())){
+            valuesToInsert.add(entity.getDuration());
+        }
+
+        if (Objects.nonNull(entity.getCreateDate())){
+            valuesToInsert.add(entity.getCreateDate());
+        }
+
+        if (!valuesToInsert.isEmpty()){
+            valuesToInsert.add(LocalDateTime.now());
+
+            valuesToInsert.add(entity.getId());
+
+            return jdbcTemplate.update(SqlGenerator.getInstance().generateUpdateColString(entity), valuesToInsert.toArray()) != 0;
+        } else {
             return false;
         }
     }
 
     @Override
+    public Boolean deleteEntity(Integer id) {
+        jdbcTemplate.update(SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_GIFT_CERTIFICATE_ID, id);
+        return jdbcTemplate.update(SQL_DELETE_GIFT_CERTIFICATE_BY_ID, id) != 0;
+    }
+
+    @Override
     public List<GiftCertificate> findAllEntities() {
-        List<GiftCertificate> giftCertificates = new ArrayList<>();
-        try (Connection connection = connectionPool.takeConnection()){
-            giftCertificates = findAllGiftCertificates(connection);
-        } catch (SQLException e){
-            logger.error(e);
-        }
-        return giftCertificates;
+        List<GiftCertificate> result = jdbcTemplate.query(SQL_FIND_ALL_GIFT_CERTIFICATES, mapper);
+
+        result.forEach(giftCertificate -> {
+            List<Integer> tagsId = jdbcTemplate.query(SQL_FIND_TAGS_ID_BY_GIFT_CERTIFICATE_ID, integerMapper, giftCertificate.getId());
+
+            List<Tag> tags  = new ArrayList<>();
+
+            tagsId.forEach(tagId -> tags.add(tagDao.findEntityById(tagId)));
+
+            giftCertificate.setTags(tags);
+        });
+
+        return result;
     }
 
     @Override
     public GiftCertificate findEntityById(Integer id) {
-        try (Connection connection = connectionPool.takeConnection()){
-            return findGiftCertificateById(connection, id);
-        } catch (SQLException e){
-            logger.error(e);
-            return null;
+        GiftCertificate result = jdbcTemplate.query(SQL_FIND_GIFT_CERTIFICATE_BY_ID, mapper, id)
+                .stream().findAny().orElse(null);
+
+        List<Integer> tagsId = jdbcTemplate.query(SQL_FIND_TAGS_ID_BY_GIFT_CERTIFICATE_ID, integerMapper, id);
+
+        List<Tag> tags  = new ArrayList<>();
+
+        tagsId.forEach(tagId -> tags.add(tagDao.findEntityById(tagId)));;
+
+        if (Objects.nonNull(result)){
+            result.setTags(tags);
         }
+
+        return result;
     }
 
     /**
@@ -116,135 +178,13 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
      * @return list of gift certificates that match parameters
      */
     public List<GiftCertificate> findGiftCertificatesWithParameters (Integer tagId, String namePart, String descriptionPart, SqlGenerator.SortByCode sortBy, Boolean ascending){
-        List<GiftCertificate> giftCertificates = new ArrayList<>();
-        try (Connection connection = connectionPool.takeConnection()){
-            giftCertificates = findGiftCertificatesWithParameters(connection, tagId, namePart, descriptionPart, sortBy, ascending);
-        } catch (SQLException e){
-            logger.error(e);
-        } finally {
-        }
-        return giftCertificates;
+        return jdbcTemplate.query(SqlGenerator.getInstance().generateSQLForGiftCertificateFindWithParameters(tagId, namePart, descriptionPart, sortBy, ascending),
+                new GiftCertificateMapper());
     }
 
-    private GiftCertificate saveGiftCertificate(Connection connection, GiftCertificate giftCertificate) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_SAVE_GIFT_CERTIFICATE, new String[] {"id"});
-        preparedStatement.setString(1, giftCertificate.name());
-        preparedStatement.setString(2, giftCertificate.description());
-        preparedStatement.setDouble(3, giftCertificate.price());
-        preparedStatement.setLong(4, giftCertificate.duration());
-        preparedStatement.setTimestamp(5, Timestamp.valueOf(giftCertificate.createDate()));
-        preparedStatement.setTimestamp(6, Timestamp.valueOf(giftCertificate.lastUpdateDate()));
-        preparedStatement.executeUpdate();
-        ResultSet resultSet = preparedStatement.getGeneratedKeys();
-        resultSet.next();
-        Integer id = resultSet.getInt(1);
-        preparedStatement.close();
-        resultSet.close();
-        return new GiftCertificate(id, giftCertificate.name(), giftCertificate.description(), giftCertificate.price(),
-                giftCertificate.duration(), giftCertificate.createDate(), giftCertificate.lastUpdateDate(), giftCertificate.tags());
-    }
-
-    private void saveGiftCertificateToTagEntries(Connection connection, GiftCertificate giftCertificate) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_SAVE_GIFT_CERTIFICATE_TO_TAG_ENTRY);
-        Integer giftCertificateId = giftCertificate.id();
-        giftCertificate.tags().forEach(tag -> {
-            try {
-                preparedStatement.setInt(1, giftCertificateId);
-                preparedStatement.setInt(2, tag.id());
-                preparedStatement.executeUpdate();
-            } catch (SQLException e) {
-                logger.error(e);
-            }
-        });
-        preparedStatement.close();
-    }
-
-    private List<GiftCertificate> findAllGiftCertificates(Connection connection) throws SQLException {
-        List<GiftCertificate> result = new ArrayList<>();
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_FIND_ALL_GIFT_CERTIFICATES);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        while (resultSet.next()){
-            result.add(convertResultSetToGiftCertificate(connection, resultSet));
-        }
-        preparedStatement.close();
-        resultSet.close();
-        return result;
-    }
-
-    private GiftCertificate findGiftCertificateById(Connection connection, Integer id) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_FIND_GIFT_CERTIFICATE_BY_ID);
-        preparedStatement.setInt(1, id);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        GiftCertificate giftCertificate;
-        if (resultSet.next()){
-            giftCertificate =  convertResultSetToGiftCertificate(connection, resultSet);
-        } else {
-            giftCertificate = null;
-        }
-        preparedStatement.close();
-        resultSet.close();
-        return giftCertificate;
-    }
-
-    private Boolean deleteGiftCertificateById(Connection connection, Integer id) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_GIFT_CERTIFICATE_ID);
-        preparedStatement.setInt(1, id);
-        preparedStatement.executeUpdate();
-        preparedStatement = connection.prepareStatement(SQL_DELETE_GIFT_CERTIFICATE_BY_ID);
-        preparedStatement.setInt(1, id);
-        int giftCertificateUpdateCount = preparedStatement.executeUpdate();
-        preparedStatement.close();
-        return giftCertificateUpdateCount > 0;
-    }
-
-    public Boolean updateGiftCertificate(Connection connection, GiftCertificate giftCertificate) throws SQLException {
-
-        SqlGenerator sqlGenerator = SqlGenerator.getInstance();
-
-        PreparedStatement preparedStatement = connection.prepareStatement(sqlGenerator.generateUpdateColString(SQL_NAME_COLUMN));
-        preparedStatement.setString(1, giftCertificate.name());
-        preparedStatement.setInt(2, giftCertificate.id());
-        preparedStatement.setString(3, giftCertificate.name());
-        preparedStatement.executeUpdate();
-
-        preparedStatement = connection.prepareStatement(sqlGenerator.generateUpdateColString(SQL_DESCRIPTION_COLUMN));
-        preparedStatement.setString(1, giftCertificate.description());
-        preparedStatement.setInt(2, giftCertificate.id());
-        preparedStatement.setString(3, giftCertificate.description());
-        preparedStatement.executeUpdate();
-
-        preparedStatement = connection.prepareStatement(sqlGenerator.generateUpdateColString(SQL_PRICE_COLUMN));
-        preparedStatement.setDouble(1, giftCertificate.price());
-        preparedStatement.setInt(2, giftCertificate.id());
-        preparedStatement.setDouble(3, giftCertificate.price());
-        preparedStatement.executeUpdate();
-
-        preparedStatement = connection.prepareStatement(sqlGenerator.generateUpdateColString(SQL_DURATION_COLUMN));
-        preparedStatement.setLong(1, giftCertificate.duration());
-        preparedStatement.setInt(2, giftCertificate.id());
-        preparedStatement.setLong(3, giftCertificate.duration());
-        preparedStatement.executeUpdate();
-
-        preparedStatement = connection.prepareStatement(sqlGenerator.generateUpdateColString(SQL_CREATE_DATE_COLUMN));
-        preparedStatement.setTimestamp(1, Timestamp.valueOf(giftCertificate.createDate()));
-        preparedStatement.setInt(2, giftCertificate.id());
-        preparedStatement.setTimestamp(3, Timestamp.valueOf(giftCertificate.createDate()));
-        preparedStatement.executeUpdate();
-
-        preparedStatement = connection.prepareStatement(sqlGenerator.generateUpdateColString(SQL_LAST_UPDATE_DATE_COLUMN));
-        preparedStatement.setTimestamp(1, Timestamp.valueOf(giftCertificate.lastUpdateDate()));
-        preparedStatement.setInt(2, giftCertificate.id());
-        preparedStatement.setTimestamp(3, Timestamp.valueOf(giftCertificate.lastUpdateDate()));
-        preparedStatement.executeUpdate();
-
-        preparedStatement.close();
-
-        return true;
-    }
-
-    private void updateGiftCertificateToTagEntries(Connection connection, GiftCertificate giftCertificate) throws SQLException {
-        List<Integer> tagsIdCurrent = giftCertificate.tags().stream().map(Tag::id).toList();
-        List<Integer> tagsIdPrevious = findTagsIdByGiftCertificateId(connection, giftCertificate.id());
+    private void updateGiftCertificateToTagEntries(GiftCertificate giftCertificate) {
+        List<Integer> tagsIdCurrent = giftCertificate.getTags().stream().map(Tag::getId).toList();
+        List<Integer> tagsIdPrevious = jdbcTemplate.query(SQL_FIND_TAGS_ID_BY_GIFT_CERTIFICATE_ID, integerMapper, giftCertificate.getId());
 
         List<Integer> tagsIdToAdd = new ArrayList<>();
         List<Integer> tagsIdToRemove = new ArrayList<>();
@@ -261,73 +201,26 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
             }
         });
 
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_SAVE_GIFT_CERTIFICATE_TO_TAG_ENTRY);
-
         for(Integer tagId : tagsIdToAdd){
-            preparedStatement.setInt(1, giftCertificate.id());
-            preparedStatement.setInt(2, tagId);
-            preparedStatement.executeUpdate();
-        }
 
-        preparedStatement = connection.prepareStatement(SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_GIFT_CERTIFICATE_ID_AND_TAG_ID);
+            Integer tagIdToBeAdded = tagId;
+
+            if (Objects.isNull(tagDao.findEntityById(tagId)) || Objects.isNull(tagId)){
+                Tag tag = giftCertificate.getTags().stream().filter(innerTag -> Objects.equals(innerTag.getId(), tagId)).findFirst().orElse(null);
+                assert tag != null;
+                Tag foundByName = tagDao.findTagByName(tag.getName());
+                if (Objects.isNull(foundByName)){
+                    tagIdToBeAdded = tagDao.saveEntity(tag).getId();
+                } else {
+                    tagIdToBeAdded = foundByName.getId();
+                }
+            }
+
+            jdbcTemplate.update(SQL_SAVE_GIFT_CERTIFICATE_TO_TAG_ENTRY, giftCertificate.getId(), tagIdToBeAdded);
+        }
 
         for(Integer tagId : tagsIdToRemove){
-            preparedStatement.setInt(1, giftCertificate.id());
-            preparedStatement.setInt(2, tagId);
-            preparedStatement.executeUpdate();
+            jdbcTemplate.update(SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_GIFT_CERTIFICATE_ID_AND_TAG_ID, giftCertificate.getId(), tagId);
         }
-
-        preparedStatement.close();
-    }
-
-    private GiftCertificate convertResultSetToGiftCertificate(Connection connection, ResultSet giftCertificateResultSet) throws SQLException{
-        TagDao tagDao = new TagDao();
-
-        List<Integer> tagsId = findTagsIdByGiftCertificateId(connection, giftCertificateResultSet.getInt(1));
-
-        List<Tag> tags = new ArrayList<>();
-
-        tagsId.forEach(tagId -> tags.add(tagDao.findEntityById(tagId)));
-
-        return new GiftCertificate(giftCertificateResultSet.getInt(1),
-                giftCertificateResultSet.getString(2),
-                giftCertificateResultSet.getString(3),
-                giftCertificateResultSet.getDouble(4),
-                giftCertificateResultSet.getLong(5),
-                giftCertificateResultSet.getTimestamp(6).toLocalDateTime(),
-                giftCertificateResultSet.getTimestamp(7).toLocalDateTime(),
-                tags);
-    }
-
-    private List<Integer> findTagsIdByGiftCertificateId(Connection connection, Integer id) throws SQLException {
-        PreparedStatement preparedStatement = connection.prepareStatement(SQL_FIND_TAGS_ID_BY_GIFT_CERTIFICATE_ID);
-        preparedStatement.setInt(1, id);
-        ResultSet tagsIdResultSet = preparedStatement.executeQuery();
-        List<Integer> tagsId = new ArrayList<>();
-        while (tagsIdResultSet.next()) {
-            tagsId.add(tagsIdResultSet.getInt(1));
-        }
-        preparedStatement.close();
-        tagsIdResultSet.close();
-        return tagsId;
-    }
-
-    private List<GiftCertificate> findGiftCertificatesWithParameters
-            (Connection connection, Integer tagId, String namePart, String descriptionPart, SqlGenerator.SortByCode sortBy, Boolean ascending) throws SQLException{
-        List<GiftCertificate> result = new ArrayList<>();
-
-        String sqlQuery = SqlGenerator.getInstance().generateSQLForGiftCertificateFindWithParameters(tagId, namePart, descriptionPart, sortBy, ascending);
-
-        PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
-
-        ResultSet resultSet = preparedStatement.executeQuery();
-
-        while (resultSet.next()){
-            result.add(convertResultSetToGiftCertificate(connection, resultSet));
-        }
-        preparedStatement.close();
-        resultSet.close();
-
-        return result;
     }
 }
