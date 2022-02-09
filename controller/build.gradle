@@ -29,6 +29,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-core:2.11.3'
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.11.3'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.11.3'
+    implementation 'org.json:json:20171018'
 
 }
 

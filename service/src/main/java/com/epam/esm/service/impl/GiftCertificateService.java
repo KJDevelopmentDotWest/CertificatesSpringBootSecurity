@@ -1,13 +1,11 @@
 package com.epam.esm.service.impl;
 
 import com.epam.esm.service.api.Service;
-import com.epam.esm.service.converter.api.Converter;
 import com.epam.esm.service.converter.impl.GiftCertificateConverter;
 import com.epam.esm.service.dto.giftcertificate.GiftCertificateDto;
+import com.epam.esm.service.expecption.ExceptionCode;
 import com.epam.esm.service.expecption.ServiceException;
-import com.epam.esm.service.validator.api.Validator;
 import com.epam.esm.service.validator.impl.GiftCertificateValidator;
-import com.epam.esm.dao.api.Dao;
 import com.epam.esm.dao.impl.GiftCertificateDao;
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import com.epam.esm.dao.sqlgenerator.SqlGenerator;
@@ -37,7 +35,7 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
         GiftCertificate savedGiftCertificate = dao.saveEntity(converter.convert(value));
 
         if (Objects.isNull(savedGiftCertificate)){
-            throw new ServiceException("Gift certificate wasn't created because of internal error");
+            throw new ServiceException(ExceptionCode.INTERNAL_DB_EXCEPTION);
         }
 
         return converter.convert(savedGiftCertificate);
@@ -46,9 +44,6 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
     @Override
     public Boolean update(GiftCertificateDto value) throws ServiceException {
         validator.validateIdNotNull(value.getId());
-        if (Objects.nonNull(value.getTags())){
-            validator.validateTagsId(value.getTags());
-        }
         return dao.updateEntity(converter.convert(value));
     }
 
@@ -64,7 +59,7 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
         GiftCertificate result = dao.findEntityById(id);
 
         if (Objects.isNull(result)){
-            throw new ServiceException("gift certificate is not found");
+            throw new ServiceException(ExceptionCode.THERE_IS_NO_GIFT_CERTIFICATE_WITH_PROVIDED_ID);
         }
 
         return converter.convert(result);
@@ -73,10 +68,6 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
     @Override
     public List<GiftCertificateDto> getAll() throws ServiceException {
         List<GiftCertificate> daoResult = dao.findAllEntities();
-
-        if (daoResult.isEmpty()){
-            throw new ServiceException("repository is empty or cant be accessed");
-        }
 
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
     }
@@ -93,10 +84,6 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
      */
     public List<GiftCertificateDto> getAllWithParameters(Integer tagId, String namePart, String descriptionPart, SqlGenerator.SortByCode sortBy, Boolean ascending) throws ServiceException {
         List<GiftCertificate> daoResult = dao.findGiftCertificatesWithParameters(tagId, namePart, descriptionPart, sortBy, ascending);
-
-        if (daoResult.isEmpty()){
-            throw new ServiceException("there is no gift certificates with provided parameters");
-        }
 
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
     }

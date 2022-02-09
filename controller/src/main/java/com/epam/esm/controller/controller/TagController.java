@@ -5,8 +5,12 @@ import com.epam.esm.service.expecption.ServiceException;
 import com.epam.esm.service.impl.TagService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,5 +53,13 @@ public class TagController {
         TagDto giftCertificate = objectMapper.readValue(giftCertificateJson, TagDto.class);
         giftCertificate.setId(id);
         service.update(giftCertificate);
+    }
+
+    @ExceptionHandler(ServiceException.class)
+    public ResponseEntity<String> handleException(ServiceException e){
+        JSONObject response = new JSONObject();
+        response.put("message", e.getExceptionCode());
+        response.put("internalExceptionCode", e.getExceptionCode().getExceptionCode());
+        return new ResponseEntity<>(response.toString(), HttpStatus.BAD_REQUEST);
     }
 }

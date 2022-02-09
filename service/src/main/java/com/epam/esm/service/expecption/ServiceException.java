@@ -2,6 +2,8 @@ package com.epam.esm.service.expecption;
 
 public class ServiceException extends Exception{
 
+    private ExceptionCode exceptionCode = ExceptionCode.UNKNOWN_EXCEPTION;
+
     public ServiceException() {
         super();
     }
@@ -18,4 +20,16 @@ public class ServiceException extends Exception{
         super(cause);
     }
 
+    public ServiceException(ExceptionCode exceptionCode){
+        this.exceptionCode = exceptionCode;
+    }
+
+    public ServiceException(String message, ExceptionCode exceptionCode) {
+        super(message);
+        this.exceptionCode = exceptionCode;
+    }
+
+    public ExceptionCode getExceptionCode() {
+        return exceptionCode;
+    }
 }
