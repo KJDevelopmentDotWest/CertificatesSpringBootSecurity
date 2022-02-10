@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,6 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/tags")
 public class TagController {
@@ -27,39 +31,45 @@ public class TagController {
     private TagService service;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @GetMapping(produces = "application/json")
-    public String getAll() throws ServiceException, JsonProcessingException {
-        return objectMapper.writeValueAsString(service.getAll());
+    @GetMapping()
+    public ResponseEntity<List<TagDto>> getAll() throws ServiceException {
+        return new ResponseEntity<>(service.getAll(), HttpStatus.OK);
     }
 
-    @GetMapping(value = "/{id}", produces = "application/json")
-    public String getById(@PathVariable("id") Integer id) throws ServiceException, JsonProcessingException {
-        return objectMapper.writeValueAsString(service.getById(id));
+    @GetMapping(value = "/{id}")
+    public ResponseEntity<TagDto> getById(@PathVariable("id") Integer id) throws ServiceException {
+        return new ResponseEntity<>(service.getById(id), HttpStatus.OK);
     }
 
     @DeleteMapping(value = "/{id}")
-    public void delete(@PathVariable("id") Integer id) throws ServiceException {
+    public ResponseEntity<Object> delete(@PathVariable("id") Integer id) throws ServiceException {
         service.delete(id);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PostMapping()
-    public void create(@RequestParam String giftCertificateJson) throws ServiceException, JsonProcessingException {
-        TagDto giftCertificate = objectMapper.readValue(giftCertificateJson, TagDto.class);
-        service.create(giftCertificate);
+    public ResponseEntity<Object> create(@RequestParam TagDto tagDto) throws ServiceException {
+        service.create(tagDto);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PutMapping(value = "/{id}")
-    public void update(@PathVariable("id") Integer id, @RequestParam String giftCertificateJson) throws ServiceException, JsonProcessingException {
-        TagDto giftCertificate = objectMapper.readValue(giftCertificateJson, TagDto.class);
-        giftCertificate.setId(id);
-        service.update(giftCertificate);
+    public ResponseEntity<Object> update(@PathVariable("id") Integer id, @RequestParam TagDto tagDto) throws ServiceException {
+        tagDto.setId(id);
+        service.update(tagDto);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @ExceptionHandler(ServiceException.class)
-    public ResponseEntity<String> handleException(ServiceException e){
+    @ExceptionHandler({ServiceException.class, DataAccessException.class})
+    public ResponseEntity<String> handleException(Exception e) {
         JSONObject response = new JSONObject();
-        response.put("message", e.getExceptionCode());
-        response.put("internalExceptionCode", e.getExceptionCode().getExceptionCode());
-        return new ResponseEntity<>(response.toString(), HttpStatus.BAD_REQUEST);
+        if (e instanceof ServiceException serviceException) {
+            response.put("message", serviceException.getExceptionCode());
+            response.put("internalExceptionCode", serviceException.getExceptionCode().getExceptionCode());
+            return new ResponseEntity<>(response.toString(), Optional.of(HttpStatus.valueOf(serviceException.getExceptionCode().getHttpStatus())).orElse(HttpStatus.INTERNAL_SERVER_ERROR));
+        } else {
+            response.put("message", ((DataAccessException) e).getMessage());
+            return new ResponseEntity<>(response.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
