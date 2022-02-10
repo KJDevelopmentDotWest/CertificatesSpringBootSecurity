@@ -2,8 +2,8 @@ package com.epam.esm.service.validator.impl;
 
 import com.epam.esm.service.dto.giftcertificate.GiftCertificateDto;
 import com.epam.esm.service.dto.tag.TagDto;
-import com.epam.esm.service.expecption.ExceptionCode;
-import com.epam.esm.service.expecption.ServiceException;
+import com.epam.esm.service.exception.ExceptionCode;
+import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.validator.api.Validator;
 import org.springframework.stereotype.Component;
 

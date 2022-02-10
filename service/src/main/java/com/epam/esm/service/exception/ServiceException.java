@@ -1,4 +1,4 @@
-package com.epam.esm.service.expecption;
+package com.epam.esm.service.exception;
 
 public class ServiceException extends Exception{
 

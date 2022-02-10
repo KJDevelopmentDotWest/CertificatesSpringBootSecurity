@@ -1,12 +1,12 @@
 package com.epam.esm.controller.controller;
 
 import com.epam.esm.service.dto.giftcertificate.GiftCertificateDto;
-import com.epam.esm.service.expecption.ServiceException;
+import com.epam.esm.service.exception.ExceptionCode;
+import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.impl.GiftCertificateService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.Optional;
+import java.util.ResourceBundle;
 
 @RestController
 @RequestMapping("/certificates")
@@ -28,6 +30,8 @@ public class CertificatesController {
 
     @Autowired
     private GiftCertificateService service;
+
+    private ResourceBundle resourceBundle;
 
     @GetMapping()
     public ResponseEntity<List<GiftCertificateDto>> getAll() throws ServiceException {
@@ -46,30 +50,30 @@ public class CertificatesController {
     }
 
     @PostMapping()
-    public ResponseEntity<Object> create(@RequestParam GiftCertificateDto giftCertificateDto) throws ServiceException, JsonProcessingException {
+    public ResponseEntity<Object> create(@RequestParam GiftCertificateDto giftCertificateDto) throws ServiceException {
         service.create(giftCertificateDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PutMapping(value = "/{id}")
-    public ResponseEntity<Object> update(@PathVariable("id") Integer id, @RequestParam GiftCertificateDto giftCertificateDto) throws ServiceException, JsonProcessingException {
+    public ResponseEntity<Object> update(@PathVariable("id") Integer id, @RequestParam GiftCertificateDto giftCertificateDto) throws ServiceException {
         giftCertificateDto.setId(id);
         service.update(giftCertificateDto);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @ExceptionHandler({ServiceException.class, DataAccessException.class, JsonProcessingException.class})
-    public ResponseEntity<String> handleException(Exception e){
+    @ExceptionHandler({ServiceException.class})
+    public ResponseEntity<String> handleException(ServiceException serviceException){
+        resourceBundle = ResourceBundle.getBundle("locale", LocaleContextHolder.getLocale());
         JSONObject response = new JSONObject();
-        if (e instanceof ServiceException serviceException){
-            response.put("message", serviceException.getExceptionCode());
-            response.put("internalExceptionCode", serviceException.getExceptionCode().getExceptionCode());
-            return new ResponseEntity<>(response.toString(), Optional.of(HttpStatus.valueOf(serviceException.getExceptionCode().getHttpStatus())).orElse(HttpStatus.INTERNAL_SERVER_ERROR) );
-        } else if (e instanceof JsonProcessingException) {
-            return new ResponseEntity<>(response.toString(), HttpStatus.BAD_REQUEST );
-        } else {
-            response.put("message", ((DataAccessException)e).getMessage());
-            return new ResponseEntity<>(response.toString(), HttpStatus.INTERNAL_SERVER_ERROR );
+
+        try {
+            response.put("message", resourceBundle.getString(String.valueOf(serviceException.getExceptionCode().getExceptionCode())));
+        } catch (MissingResourceException ignored) {
+            response.put("message", resourceBundle.getString("500"));
         }
+
+        response.put("internalExceptionCode", serviceException.getExceptionCode().getExceptionCode());
+        return new ResponseEntity<>(response.toString(), Optional.of(HttpStatus.valueOf(serviceException.getExceptionCode().getHttpStatus())).orElse(HttpStatus.INTERNAL_SERVER_ERROR) );
     }
 }

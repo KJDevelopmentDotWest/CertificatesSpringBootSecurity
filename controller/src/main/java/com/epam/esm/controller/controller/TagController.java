@@ -1,13 +1,10 @@
 package com.epam.esm.controller.controller;
 
 import com.epam.esm.service.dto.tag.TagDto;
-import com.epam.esm.service.expecption.ServiceException;
+import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.impl.TagService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,7 +26,6 @@ public class TagController {
 
     @Autowired
     private TagService service;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @GetMapping()
     public ResponseEntity<List<TagDto>> getAll() throws ServiceException {
@@ -60,16 +56,11 @@ public class TagController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @ExceptionHandler({ServiceException.class, DataAccessException.class})
-    public ResponseEntity<String> handleException(Exception e) {
+    @ExceptionHandler({ServiceException.class})
+    public ResponseEntity<String> handleException(ServiceException serviceException){
         JSONObject response = new JSONObject();
-        if (e instanceof ServiceException serviceException) {
-            response.put("message", serviceException.getExceptionCode());
-            response.put("internalExceptionCode", serviceException.getExceptionCode().getExceptionCode());
-            return new ResponseEntity<>(response.toString(), Optional.of(HttpStatus.valueOf(serviceException.getExceptionCode().getHttpStatus())).orElse(HttpStatus.INTERNAL_SERVER_ERROR));
-        } else {
-            response.put("message", ((DataAccessException) e).getMessage());
-            return new ResponseEntity<>(response.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        response.put("message", serviceException.getExceptionCode());
+        response.put("internalExceptionCode", serviceException.getExceptionCode().getExceptionCode());
+        return new ResponseEntity<>(response.toString(), Optional.of(HttpStatus.valueOf(serviceException.getExceptionCode().getHttpStatus())).orElse(HttpStatus.INTERNAL_SERVER_ERROR) );
     }
 }

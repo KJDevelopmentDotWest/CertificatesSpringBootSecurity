@@ -1,15 +1,15 @@
 package com.epam.esm.service.impl;
 
 import com.epam.esm.service.api.Service;
-import com.epam.esm.service.converter.api.Converter;
+import com.epam.esm.service.converter.impl.TagConverter;
 import com.epam.esm.service.dto.tag.TagDto;
-import com.epam.esm.service.expecption.ExceptionCode;
-import com.epam.esm.service.expecption.ServiceException;
-import com.epam.esm.service.validator.api.Validator;
-import com.epam.esm.dao.api.Dao;
+import com.epam.esm.service.exception.ExceptionCode;
+import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.dao.impl.TagDao;
 import com.epam.esm.dao.model.tag.Tag;
+import com.epam.esm.service.validator.impl.TagValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -21,13 +21,13 @@ import java.util.stream.Collectors;
 public class TagService implements Service<TagDto> {
 
     @Autowired
-    Dao<Tag> dao;
+    TagDao dao;
 
     @Autowired
-    Converter<Tag, TagDto> converter;
+    TagConverter converter;
 
     @Autowired
-    Validator<TagDto> validator;
+    TagValidator validator;
 
     /**
      *
@@ -43,7 +43,12 @@ public class TagService implements Service<TagDto> {
             throw new ServiceException(ExceptionCode.TAG_NAME_MUST_BE_UNIQUE);
         }
 
-        Tag savedTag = dao.saveEntity(converter.convert(value));
+        Tag savedTag;
+        try {
+            savedTag = dao.saveEntity(converter.convert(value));
+        } catch (DataAccessException e){
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+        }
 
         if (Objects.isNull(savedTag)){
             throw new ServiceException(ExceptionCode.INTERNAL_DB_EXCEPTION);
@@ -63,14 +68,29 @@ public class TagService implements Service<TagDto> {
     @Override
     public Boolean delete(Integer id) throws ServiceException {
         validator.validateIdNotNull(id);
-        return dao.deleteEntity(id);
+
+        Boolean result;
+
+        try {
+            result = dao.deleteEntity(id);
+        } catch (DataAccessException e){
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+        }
+
+        return result;
     }
 
     @Override
     public TagDto getById(Integer id) throws ServiceException {
         validator.validateIdNotNull(id);
 
-        Tag daoResult = dao.findEntityById(id);
+        Tag daoResult;
+
+        try {
+            daoResult = dao.findEntityById(id);
+        } catch (DataAccessException e){
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+        }
 
         if (Objects.isNull(daoResult)){
             throw new ServiceException(ExceptionCode.THERE_IS_NO_TAG_WITH_PROVIDED_ID);
@@ -81,7 +101,14 @@ public class TagService implements Service<TagDto> {
 
     @Override
     public List<TagDto> getAll() throws ServiceException {
-        List<Tag> daoResult = dao.findAllEntities();
+        List<Tag> daoResult;
+
+        try {
+            daoResult = dao.findAllEntities();
+        } catch (DataAccessException e){
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+        }
+
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
     }
 
@@ -96,7 +123,13 @@ public class TagService implements Service<TagDto> {
             throw new ServiceException(ExceptionCode.TAG_NAME_CANNOT_BE_NULL);
         }
 
-        Tag daoResult = ((TagDao)dao).findTagByName(name);
+        Tag daoResult;
+
+        try {
+            daoResult = dao.findTagByName(name);
+        } catch (DataAccessException e){
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+        }
 
         if (Objects.isNull(daoResult)){
             throw new ServiceException(ExceptionCode.THERE_IS_NO_TAG_WITH_PROVIDED_NAME);
