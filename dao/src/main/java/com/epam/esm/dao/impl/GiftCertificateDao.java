@@ -46,6 +46,9 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     private static final String SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_GIFT_CERTIFICATE_ID = "DELETE FROM gift_certificate_to_tag WHERE gift_certificate_id = ?";
     private static final String SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_GIFT_CERTIFICATE_ID_AND_TAG_ID = "DELETE FROM gift_certificate_to_tag WHERE gift_certificate_id = ? AND tag_id = ?";
 
+    private static final String SQL_NAME_COLUMN = "name";
+    private static final String SQL_DESCRIPTION_COLUMN = "description";
+
     private final GiftCertificateMapper mapper = new GiftCertificateMapper();
     private final IntegerMapper integerMapper = new IntegerMapper();
 
@@ -121,7 +124,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
             valuesToInsert.add(entity.getId());
 
-            return jdbcTemplate.update(SqlGenerator.generateUpdateColString(entity), valuesToInsert.toArray()) != 0;
+            return jdbcTemplate.update(SqlGenerator.generateUpdateColumnsString(entity), valuesToInsert.toArray()) != 0;
         } else {
             return false;
         }
@@ -168,17 +171,61 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     }
 
     /**
-     *
+     * returns filtered list of gift certificates
      * @param tagId id of tag to be searched, null if no need to search by tag
      * @param namePart part of name to be filtered, null if no need to filter by name part
      * @param descriptionPart part of description to be filtered, null if no need to filter description part
-     * @param sortBy sort by code, null if no need to sort
-     * @param ascending true for ascending sort, false if descending. ignored if sortBy is null
+     * @param sortByName true for sorting by name, false otherwise
+     * @param sortByDescription true for sorting by description, false otherwise
+     * @param ascending true for ascending sort, false if descending. ignored if sortByName and sortByDescription is null. true if null or empty
      * @return list of gift certificates that match parameters
      */
-    public List<GiftCertificate> findGiftCertificatesWithParameters (Integer tagId, String namePart, String descriptionPart, SqlGenerator.SortByCode sortBy, Boolean ascending){
-        return jdbcTemplate.query(SqlGenerator.generateSQLForGiftCertificateFindWithParameters(tagId, namePart, descriptionPart, sortBy, ascending),
-                new GiftCertificateMapper());
+    public List<GiftCertificate> findGiftCertificatesWithParameters (Integer tagId, String namePart, String descriptionPart, Boolean sortByName, Boolean sortByDescription, List<Boolean> ascending){
+
+        List<String> whereStringLikeColumnNames = new ArrayList<>();
+        List<String> orderByColumnNames = new ArrayList<>();
+        List<Boolean> ascendingInternal = new ArrayList<>();
+        List<Object> objectsToAdd = new ArrayList<>();
+
+        if (Objects.nonNull(tagId)){
+            objectsToAdd.add(tagId);
+        }
+
+        if (Objects.nonNull(namePart)){
+            whereStringLikeColumnNames.add(SQL_NAME_COLUMN);
+            objectsToAdd.add(namePart);
+        }
+
+        if (Objects.nonNull(descriptionPart)){
+            whereStringLikeColumnNames.add(SQL_DESCRIPTION_COLUMN);
+            objectsToAdd.add(descriptionPart);
+        }
+
+        if (Objects.nonNull(sortByName) && sortByName) {
+            orderByColumnNames.add(SQL_NAME_COLUMN);
+            if (Objects.nonNull(ascending) && ascending.size() > 0 &&!ascending.get(0)){
+                ascendingInternal.add(true);
+            } else {
+                ascendingInternal.add(false);
+            }
+        }
+
+        if (Objects.nonNull(sortByDescription) && sortByDescription) {
+            orderByColumnNames.add(SQL_DESCRIPTION_COLUMN);
+            if (Objects.nonNull(ascending) && ascending.size() > 1 &&!ascending.get(1)){
+                ascendingInternal.add(true);
+            } else {
+                ascendingInternal.add(false);
+            }
+        }
+
+        String sqlQuery = SqlGenerator.generateSQLForGiftCertificateFindWithParameters(Objects.nonNull(tagId), whereStringLikeColumnNames, orderByColumnNames, ascendingInternal);
+        if (Objects.nonNull(sqlQuery)){
+
+            return jdbcTemplate.query(sqlQuery, new GiftCertificateMapper(), objectsToAdd.toArray());
+        } else {
+            return new ArrayList<>();
+        }
     }
 
     private void updateGiftCertificateToTagEntries(GiftCertificate giftCertificate) {

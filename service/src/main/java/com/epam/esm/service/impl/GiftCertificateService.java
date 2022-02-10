@@ -8,7 +8,6 @@ import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.validator.impl.GiftCertificateValidator;
 import com.epam.esm.dao.impl.GiftCertificateDao;
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
-import com.epam.esm.dao.sqlgenerator.SqlGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
@@ -109,20 +108,21 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
     }
 
     /**
-     *
+     * returns filtered list of gift certificates
      * @param tagId id of tag to be searched, null if no need to search by tag
      * @param namePart part of name to be filtered, null if no need to filter by name part
      * @param descriptionPart part of description to be filtered, null if no need to filter description part
-     * @param sortBy sort by code, null if no need to sort
-     * @param ascending true for ascending sort, false if descending. ignored if sortBy is null
+     * @param sortByName true for sorting by name, false otherwise
+     * @param sortByDescription true for sorting by description, false otherwise
+     * @param ascending true for ascending sort, false if descending. ignored if sortByName and sortByDescription is null. true if null or empty
      * @return list of gift certificates that match parameters
      * @throws ServiceException if there is no gift certificates with provided parameters
      */
-    public List<GiftCertificateDto> getAllWithParameters(Integer tagId, String namePart, String descriptionPart, SqlGenerator.SortByCode sortBy, Boolean ascending) throws ServiceException {
+    public List<GiftCertificateDto> getAllWithParameters(Integer tagId, String namePart, String descriptionPart, Boolean sortByName, Boolean sortByDescription, List<Boolean> ascending) throws ServiceException {
         List<GiftCertificate> daoResult;
 
         try {
-            daoResult = dao.findGiftCertificatesWithParameters(tagId, namePart, descriptionPart, sortBy, ascending);
+            daoResult = dao.findGiftCertificatesWithParameters(tagId, namePart, descriptionPart, sortByName, sortByDescription, ascending);
         } catch (DataAccessException e){
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
         }

@@ -2,35 +2,34 @@ package com.epam.esm.dao.sqlgenerator;
 
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 
+import java.util.List;
 import java.util.Objects;
 
 
 public class SqlGenerator {
 
-    private static final String SQL_UPDATE_GIFT_CERTIFICATE_START = "UPDATE gift_certificate SET ";
-    private static final String SQL_UPDATE_GIFT_CERTIFICATE_END = "WHERE id = ? ";
-
-    private static final String SQL_FIND_START = "SELECT gift_certificate.id, gift_certificate.name, description, price, duration, create_date, last_update_date FROM gift_certificate ";
+    private static final String SQL_SELECT = "SELECT ";
+    private static final String SQL_FROM = "FROM ";
+    private static final String SQL_JOIN = "JOIN ";
+    private static final String SQL_OR = " OR ";
+    private static final String SQL_ON = "ON ";
+    private static final String SQL_LIKE = "LIKE ";
+    private static final String SQL_ORDER_BY = "ORDER BY ";
+    private static final String SQL_DESC = "DESC ";
     private static final String SQL_WHERE = "WHERE ";
-    private static final String SQL_FIND_JOIN_PART = "JOIN gift_certificate_to_tag ON gift_certificate.id = gift_certificate_id WHERE tag_id = ";
     private static final String SQL_AND = "AND ";
-    private static final String SQL_FIND_NAME_LIKE_START = "name LIKE '%";
-    private static final String SQL_FIND_DESCRIPTION_LIKE_START = "description LIKE '%";
-    private static final String SQL_FIND_LIKE_END = "%' ";
-    private static final String SQL_FIND_ORDER_BY_NAME = "ORDER BY name ";
-    private static final String SQL_FIND_ORDER_BY_DATE = "ORDER BY last_update_date ";
-    private static final String SQL_FIND_ORDER_BY_DESC = "DESC ";
+    private static final String SQL_UPDATE = "UPDATE ";
+    private static final String SQL_SET = "SET ";
 
     private static final String WHITE_SPACE_SYMBOL = " ";
     private static final String COMMA_SYMBOL = ", ";
     private static final String EQUAL_SYMBOL = " = ";
     private static final String NOT_EQUAL_SYMBOL = " != ";
-    private static final String QUESTION_SYMBOL = " ?";
+    private static final String QUESTION_SYMBOL = "?";
     private static final String EQUAL_QUESTION_MARK_SYMBOL = " = ?";
-
-    private static final String SQL_FIND_TAG_START = "SELECT id, name FROM tag WHERE ";
-
-    private static final String SQL_OR = " OR ";
+    private static final String DOT_SYMBOL = ".";
+    private static final String APOSTROPHE_SYMBOL = "'";
+    private static final String PERCENT_SYMBOL = "%";
 
     private static final String SQL_ID_COLUMN = "id";
     private static final String SQL_NAME_COLUMN = "name";
@@ -40,81 +39,78 @@ public class SqlGenerator {
     private static final String SQL_CREATE_DATE_COLUMN = "create_date";
     private static final String SQL_LAST_UPDATE_DATE_COLUMN = "last_update_date";
 
-    public static String generateSQLForGiftCertificateFindWithParameters(Integer tagId, String namePart, String descriptionPart, SortByCode sortBy, Boolean ascending){
-        StringBuilder generatedSQLQuery = new StringBuilder();
-        generatedSQLQuery.append(SQL_FIND_START);
+    private static final String SQL_GIFT_CERTIFICATE_ID_COLUMN = "gift_certificate_id";
 
-        if (!Objects.isNull(tagId) ||
-                !Objects.isNull(namePart) ||
-                !Objects.isNull(descriptionPart) ||
-                !Objects.isNull(sortBy)){
+    private static final String GIFT_CERTIFICATE_TABLE = "gift_certificate";
+    private static final String GIFT_CERTIFICATE_TO_TAG_TABLE = "gift_certificate_to_tag";
+    private static final String TAG_TABLE = "tag";
 
-            if (!Objects.isNull(tagId)){
-                generatedSQLQuery.append(SQL_FIND_JOIN_PART);
-                generatedSQLQuery.append(tagId);
-                generatedSQLQuery.append(WHITE_SPACE_SYMBOL);
+    /**
+     * generates string with ? in place of passed params in order:join column, where columns, order by columns. null fields will be ignored
+     * @param filterByTag if true, join will be added with constraint gift_certificate.id to gift_certificate_to_tag.gift_certificate_id
+     * @param whereStringLikeColumnNames list of names of columns that will be used in "WHERE whereStringLikeColumns[i] LIKE '%?%'"
+     * @param orderByColumnNames list of names of columns that will be used in "ORDER BY orderByColumns[i]"
+     * @param ascending list of boolean for orderByColumns, true for order by asc, false otherwise. ignored if orderByColumns is null or empty.
+     *                  if ascending.size less than orderByColumns.size, null will be returned. ascending.size more than orderByColumns.size, excess booleans will be ignored
+     * @return generated sql query
+     */
+    public static String generateSQLForGiftCertificateFindWithParameters(Boolean filterByTag, List<String> whereStringLikeColumnNames, List<String> orderByColumnNames, List<Boolean> ascending){
+        StringBuilder sqlFindWithParametersString = new StringBuilder();
 
-                if (!Objects.isNull(namePart) ||
-                        !Objects.isNull(descriptionPart)){
-                    generatedSQLQuery.append(SQL_AND);
-                }
+        if (Objects.nonNull(orderByColumnNames) && orderByColumnNames.size() > ascending.size()){
+            return null;
+        }
 
-            } else {
-                if (!Objects.isNull(namePart) ||
-                        !Objects.isNull(descriptionPart)){
-                    generatedSQLQuery.append(SQL_WHERE);
-                }
-            }
+        sqlFindWithParametersString.append(SQL_SELECT).append(GIFT_CERTIFICATE_TABLE).append(DOT_SYMBOL).append(SQL_ID_COLUMN).append(COMMA_SYMBOL)
+                .append(GIFT_CERTIFICATE_TABLE).append(DOT_SYMBOL).append(SQL_NAME_COLUMN).append(COMMA_SYMBOL)
+                .append(SQL_DESCRIPTION_COLUMN).append(COMMA_SYMBOL)
+                .append(SQL_PRICE_COLUMN).append(COMMA_SYMBOL)
+                .append(SQL_DURATION_COLUMN).append(COMMA_SYMBOL)
+                .append(SQL_CREATE_DATE_COLUMN).append(COMMA_SYMBOL)
+                .append(SQL_LAST_UPDATE_DATE_COLUMN).append(WHITE_SPACE_SYMBOL)
+                .append(SQL_FROM)
+                .append(GIFT_CERTIFICATE_TABLE).append(WHITE_SPACE_SYMBOL);
 
-            if (!Objects.isNull(namePart)){
-                generatedSQLQuery.append(SQL_FIND_NAME_LIKE_START);
-                generatedSQLQuery.append(namePart);
-                generatedSQLQuery.append(SQL_FIND_LIKE_END);
+        if (filterByTag){
+            sqlFindWithParametersString.append(SQL_JOIN).append(GIFT_CERTIFICATE_TO_TAG_TABLE).append(WHITE_SPACE_SYMBOL).append(SQL_ON)
+                    .append(GIFT_CERTIFICATE_TABLE).append(DOT_SYMBOL).append(SQL_ID_COLUMN)
+                    .append(EQUAL_SYMBOL).append(SQL_GIFT_CERTIFICATE_ID_COLUMN)
+                    .append(WHITE_SPACE_SYMBOL).append(SQL_WHERE)
+                    .append(SQL_ID_COLUMN).append(EQUAL_QUESTION_MARK_SYMBOL).append(WHITE_SPACE_SYMBOL);
+        }
 
-                if (!Objects.isNull(descriptionPart)) {
-                    generatedSQLQuery.append(SQL_AND);
-                }
-            }
-
-            if (!Objects.isNull(descriptionPart)){
-                generatedSQLQuery.append(SQL_FIND_DESCRIPTION_LIKE_START);
-                generatedSQLQuery.append(descriptionPart);
-                generatedSQLQuery.append(SQL_FIND_LIKE_END);
-            }
-
-            if (!Objects.isNull(sortBy)){
-                if (sortBy.equals(SortByCode.SORT_BY_NAME)){
-                    generatedSQLQuery.append(SQL_FIND_ORDER_BY_NAME);
-                    if (!ascending){
-                        generatedSQLQuery.append(SQL_FIND_ORDER_BY_DESC);
-                    }
-                } else if (sortBy.equals(SortByCode.SORT_BY_DESCRIPTION)){
-                    generatedSQLQuery.append(SQL_FIND_ORDER_BY_DATE);
-                    if (!ascending){
-                        generatedSQLQuery.append(SQL_FIND_ORDER_BY_DESC);
-                    }
-                } else if (sortBy.equals(SortByCode.SORT_BY_NAME_AND_DESCRIPTION)){
-                    generatedSQLQuery.append(SQL_FIND_ORDER_BY_NAME);
-                    if (!ascending){
-                        generatedSQLQuery.append(SQL_FIND_ORDER_BY_DESC);
-                    }
-                    generatedSQLQuery.append(COMMA_SYMBOL);
-                    generatedSQLQuery.append(SQL_LAST_UPDATE_DATE_COLUMN);
-                    generatedSQLQuery.append(WHITE_SPACE_SYMBOL);
-                    if (!ascending){
-                        generatedSQLQuery.append(SQL_FIND_ORDER_BY_DESC);
-                    }
+        if (Objects.nonNull(whereStringLikeColumnNames) && !whereStringLikeColumnNames.isEmpty()){
+            sqlFindWithParametersString.append(SQL_WHERE);
+            for (int i = 0; i < whereStringLikeColumnNames.size(); i++){
+                sqlFindWithParametersString.append(whereStringLikeColumnNames.get(i)).append(WHITE_SPACE_SYMBOL).append(SQL_LIKE)
+                        .append(APOSTROPHE_SYMBOL).append(PERCENT_SYMBOL).append(QUESTION_SYMBOL).append(PERCENT_SYMBOL).append(APOSTROPHE_SYMBOL).append(WHITE_SPACE_SYMBOL);
+                if (i < whereStringLikeColumnNames.size() - 1){
+                    sqlFindWithParametersString.append(SQL_AND);
                 }
             }
         }
-        return generatedSQLQuery.toString();
+
+        if (Objects.nonNull(orderByColumnNames) && !orderByColumnNames.isEmpty()){
+            sqlFindWithParametersString.append(SQL_ORDER_BY);
+            for (int i = 0; i < orderByColumnNames.size(); i++){
+                sqlFindWithParametersString.append(orderByColumnNames.get(i)).append(WHITE_SPACE_SYMBOL);
+                if (!ascending.get(i)){
+                    sqlFindWithParametersString.append(SQL_DESC);
+                }
+                if (i < orderByColumnNames.size() - 1){
+                    sqlFindWithParametersString.append(COMMA_SYMBOL);
+                }
+            }
+        }
+
+        return sqlFindWithParametersString.toString();
     }
 
-    public static String generateUpdateColString(GiftCertificate entity){
+    public static String generateUpdateColumnsString(GiftCertificate entity){
         StringBuilder sqlUpdateString = new StringBuilder();
         Boolean isFirst = true;
 
-        sqlUpdateString.append(SQL_UPDATE_GIFT_CERTIFICATE_START);
+        sqlUpdateString.append(SQL_UPDATE).append(GIFT_CERTIFICATE_TABLE).append(WHITE_SPACE_SYMBOL).append(SQL_SET);
 
         if (Objects.nonNull(entity.getName())){
             isFirst = false;
@@ -176,7 +172,7 @@ public class SqlGenerator {
             sqlUpdateString.append(EQUAL_QUESTION_MARK_SYMBOL);
         }
 
-        sqlUpdateString.append(SQL_UPDATE_GIFT_CERTIFICATE_END);
+        sqlUpdateString.append(SQL_WHERE).append(SQL_ID_COLUMN).append(EQUAL_QUESTION_MARK_SYMBOL);
 
         return sqlUpdateString.toString();
     }
@@ -184,7 +180,11 @@ public class SqlGenerator {
     public static String generateFindTagsByIdArray(Integer amountOfId){
         StringBuilder resultSql = new StringBuilder();
 
-        resultSql.append(SQL_FIND_TAG_START);
+        resultSql.append(SQL_SELECT).append(SQL_ID_COLUMN).append(COMMA_SYMBOL)
+                .append(SQL_NAME_COLUMN).append(WHITE_SPACE_SYMBOL)
+                .append(SQL_FROM).append(TAG_TABLE).append(WHITE_SPACE_SYMBOL)
+                .append(SQL_WHERE);
+
         resultSql.append(SQL_ID_COLUMN);
         resultSql.append(EQUAL_QUESTION_MARK_SYMBOL);
 
@@ -195,12 +195,6 @@ public class SqlGenerator {
         }
 
         return resultSql.toString();
-    }
-
-    public enum SortByCode{
-        SORT_BY_NAME,
-        SORT_BY_DESCRIPTION,
-        SORT_BY_NAME_AND_DESCRIPTION
     }
 
 }

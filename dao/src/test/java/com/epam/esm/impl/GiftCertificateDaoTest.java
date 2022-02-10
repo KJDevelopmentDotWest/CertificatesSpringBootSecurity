@@ -46,9 +46,4 @@ class GiftCertificateDaoTest {
         dao.updateEntity(giftCertificate);
         System.out.println(dao.findEntityById(11));
     }
-
-    @Test
-    void testGenerator(){
-        System.out.println(dao.findGiftCertificatesWithParameters(null, "am", null, SqlGenerator.SortByCode.SORT_BY_NAME, true));
-    }
 }
