@@ -18,6 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Dao interface implementation for Tag with ability to perform CRUD operations
+ */
+
 @Component
 public class TagDao implements Dao<Tag> {
 
@@ -81,7 +85,7 @@ public class TagDao implements Dao<Tag> {
     }
 
     /**
-     *
+     * returns tag with provided name
      * @param name name to be searched
      * @return tag with provided name, null otherwise
      */

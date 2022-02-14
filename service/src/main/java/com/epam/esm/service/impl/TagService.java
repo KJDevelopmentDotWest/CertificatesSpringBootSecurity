@@ -4,6 +4,7 @@ import com.epam.esm.service.api.Service;
 import com.epam.esm.service.converter.impl.TagConverter;
 import com.epam.esm.service.dto.tag.TagDto;
 import com.epam.esm.service.exception.ExceptionCode;
+import com.epam.esm.service.exception.ExceptionMessage;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.dao.impl.TagDao;
 import com.epam.esm.dao.model.tag.Tag;
@@ -17,20 +18,24 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * Service interface implementation for TagDto with ability to perform CRD operations
+ */
+
 @Component
 public class TagService implements Service<TagDto> {
 
     @Autowired
-    TagDao dao;
+    private TagDao dao;
 
     @Autowired
-    TagConverter converter;
+    private TagConverter converter;
 
     @Autowired
-    TagValidator validator;
+    private TagValidator validator;
 
     /**
-     *
+     * validates value and sends save request to tag dao class
      * @param value value to be saved
      * @return saved tag
      * @throws ServiceException if value is invalid, value cannot be created or tag with provided name already exists
@@ -39,25 +44,27 @@ public class TagService implements Service<TagDto> {
     public TagDto create(TagDto value) throws ServiceException {
         validator.validate(value, false);
 
-        if (!Objects.isNull(((TagDao)dao).findTagByName(value.getName()))){
-            throw new ServiceException(ExceptionCode.TAG_NAME_MUST_BE_UNIQUE);
+        if (!Objects.isNull(dao.findTagByName(value.getName()))){
+            System.out.println("we");
+            throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.TAG_NAME_MUST_BE_UNIQUE);
         }
 
         Tag savedTag;
         try {
             savedTag = dao.saveEntity(converter.convert(value));
         } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         if (Objects.isNull(savedTag)){
-            throw new ServiceException(ExceptionCode.INTERNAL_DB_EXCEPTION);
+            throw new ServiceException(ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         return converter.convert(savedTag);
     }
 
     /**
+     * update operation is not supported for tags
      * @throws ServiceException always, update operation is not supported for tags
      */
     @Override
@@ -67,14 +74,14 @@ public class TagService implements Service<TagDto> {
 
     @Override
     public Boolean delete(Integer id) throws ServiceException {
-        validator.validateIdNotNull(id);
+        validator.validateIdNotNullAndPositive(id);
 
         Boolean result;
 
         try {
             result = dao.deleteEntity(id);
         } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         return result;
@@ -82,18 +89,18 @@ public class TagService implements Service<TagDto> {
 
     @Override
     public TagDto getById(Integer id) throws ServiceException {
-        validator.validateIdNotNull(id);
+        validator.validateIdNotNullAndPositive(id);
 
         Tag daoResult;
 
         try {
             daoResult = dao.findEntityById(id);
         } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         if (Objects.isNull(daoResult)){
-            throw new ServiceException(ExceptionCode.THERE_IS_NO_TAG_WITH_PROVIDED_ID);
+            throw new ServiceException(ExceptionCode.ENTITY_NOT_FOUND, ExceptionMessage.THERE_IS_NO_TAG_WITH_PROVIDED_ID);
         }
 
         return converter.convert(daoResult);
@@ -106,21 +113,21 @@ public class TagService implements Service<TagDto> {
         try {
             daoResult = dao.findAllEntities();
         } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
-     *
+     * returns tag with provided
      * @param name name to be searched
      * @return tag with provided name
-     * @throws ServiceException if there is no tag with provided name or if name is null
+     * @throws ServiceException if there is no tag with provided name, name is null, or database error occurred
      */
     public TagDto getByName(String name) throws ServiceException{
         if (Objects.isNull(name)){
-            throw new ServiceException(ExceptionCode.TAG_NAME_CANNOT_BE_NULL);
+            throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.TAG_NAME_CANNOT_BE_NULL);
         }
 
         Tag daoResult;
@@ -128,11 +135,11 @@ public class TagService implements Service<TagDto> {
         try {
             daoResult = dao.findTagByName(name);
         } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         if (Objects.isNull(daoResult)){
-            throw new ServiceException(ExceptionCode.THERE_IS_NO_TAG_WITH_PROVIDED_NAME);
+            throw new ServiceException(ExceptionCode.ENTITY_NOT_FOUND, ExceptionMessage.THERE_IS_NO_TAG_WITH_PROVIDED_NAME);
         }
 
         return converter.convert(daoResult);

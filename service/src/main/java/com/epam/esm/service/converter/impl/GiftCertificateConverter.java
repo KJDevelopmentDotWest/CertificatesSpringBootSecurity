@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of converter interface fot gift certificates
+ */
+
 @Component
 public class GiftCertificateConverter implements Converter<GiftCertificate, GiftCertificateDto> {
     @Override

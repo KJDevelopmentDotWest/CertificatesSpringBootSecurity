@@ -4,10 +4,13 @@ import com.epam.esm.service.api.Service;
 import com.epam.esm.service.converter.impl.GiftCertificateConverter;
 import com.epam.esm.service.dto.giftcertificate.GiftCertificateDto;
 import com.epam.esm.service.exception.ExceptionCode;
+import com.epam.esm.service.exception.ExceptionMessage;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.validator.impl.GiftCertificateValidator;
 import com.epam.esm.dao.impl.GiftCertificateDao;
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
@@ -17,17 +20,23 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * Service interface implementation for GiftCertificateDto with ability to perform CRUD operations
+ */
+
 @Component
 public class GiftCertificateService implements Service<GiftCertificateDto> {
 
     @Autowired
-    GiftCertificateDao dao;
+    private GiftCertificateDao dao;
 
     @Autowired
-    GiftCertificateConverter converter;
+    private GiftCertificateConverter converter;
 
     @Autowired
-    GiftCertificateValidator validator;
+    private GiftCertificateValidator validator;
+
+    private static final Logger logger = LogManager.getLogger(GiftCertificateService.class);
 
     @Override
     public GiftCertificateDto create(GiftCertificateDto value) throws ServiceException {
@@ -37,11 +46,12 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
         try {
             savedGiftCertificate = dao.saveEntity(converter.convert(value));
         } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+            System.out.println(e.getMessage());
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         if (Objects.isNull(savedGiftCertificate)){
-            throw new ServiceException(ExceptionCode.INTERNAL_DB_EXCEPTION);
+            throw new ServiceException(ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         return converter.convert(savedGiftCertificate);
@@ -49,14 +59,14 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
 
     @Override
     public Boolean update(GiftCertificateDto value) throws ServiceException {
-        validator.validateIdNotNull(value.getId());
+        validator.validate(value, true, true);
 
         Boolean result;
 
         try {
             result = dao.updateEntity(converter.convert(value));
         } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         return result;
@@ -64,13 +74,13 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
 
     @Override
     public Boolean delete(Integer id) throws ServiceException {
-        validator.validateIdNotNull(id);
+        validator.validateIdNotNullAndPositive(id);
         Boolean result;
 
         try {
             result = dao.deleteEntity(id);
         } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         return result;
@@ -78,17 +88,17 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
 
     @Override
     public GiftCertificateDto getById(Integer id) throws ServiceException {
-        validator.validateIdNotNull(id);
+        validator.validateIdNotNullAndPositive(id);
         GiftCertificate result;
 
         try {
             result = dao.findEntityById(id);
         } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         if (Objects.isNull(result)){
-            throw new ServiceException(ExceptionCode.THERE_IS_NO_GIFT_CERTIFICATE_WITH_PROVIDED_ID);
+            throw new ServiceException(ExceptionCode.ENTITY_NOT_FOUND, ExceptionMessage.THERE_IS_NO_GIFT_CERTIFICATE_WITH_PROVIDED_ID);
         }
 
         return converter.convert(result);
@@ -101,7 +111,7 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
         try {
             daoResult = dao.findAllEntities();
         } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
@@ -113,18 +123,18 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
      * @param namePart part of name to be filtered, null if no need to filter by name part
      * @param descriptionPart part of description to be filtered, null if no need to filter description part
      * @param sortByName true for sorting by name, false otherwise
-     * @param sortByDescription true for sorting by description, false otherwise
-     * @param ascending true for ascending sort, false if descending. ignored if sortByName and sortByDescription is null. true if null or empty
+     * @param sortByDate true for sorting by date, false otherwise
+     * @param ascending true for ascending sort, false if descending. ignored if sortByName and sortByDescription is null. true if null
      * @return list of gift certificates that match parameters
-     * @throws ServiceException if there is no gift certificates with provided parameters
+     * @throws ServiceException if database error occurred
      */
-    public List<GiftCertificateDto> getAllWithParameters(Integer tagId, String namePart, String descriptionPart, Boolean sortByName, Boolean sortByDescription, List<Boolean> ascending) throws ServiceException {
+    public List<GiftCertificateDto> getAllWithParameters(Integer tagId, String namePart, String descriptionPart, Boolean sortByName, Boolean sortByDate, Boolean ascending) throws ServiceException {
         List<GiftCertificate> daoResult;
 
         try {
-            daoResult = dao.findGiftCertificatesWithParameters(tagId, namePart, descriptionPart, sortByName, sortByDescription, ascending);
+            daoResult = dao.findGiftCertificatesWithParameters(tagId, namePart, descriptionPart, sortByName, sortByDate, ascending);
         } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION);
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));

@@ -5,6 +5,10 @@ import com.epam.esm.service.dto.tag.TagDto;
 import com.epam.esm.dao.model.tag.Tag;
 import org.springframework.stereotype.Component;
 
+/**
+ * Implementation of converter interface fot gift certificates
+ */
+
 @Component
 public class TagConverter implements Converter<Tag, TagDto> {
     @Override
