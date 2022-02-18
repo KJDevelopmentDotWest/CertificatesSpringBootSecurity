@@ -48,7 +48,7 @@ public class TagValidator implements Validator<TagDto> {
             exceptionMessages.add(ExceptionMessage.TAG_ID_CANNOT_BE_NULL);
             return;
         }
-        if (id < 0){
+        if (id < 1){
             exceptionMessages.add(ExceptionMessage.TAG_ID_CANNOT_BE_NEGATIVE);
         }
     }

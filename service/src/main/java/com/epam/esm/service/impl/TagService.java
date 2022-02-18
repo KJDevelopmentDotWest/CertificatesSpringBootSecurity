@@ -9,6 +9,8 @@ import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.dao.impl.TagDao;
 import com.epam.esm.dao.model.tag.Tag;
 import com.epam.esm.service.validator.impl.TagValidator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
@@ -34,6 +36,8 @@ public class TagService implements Service<TagDto> {
     @Autowired
     private TagValidator validator;
 
+    private static final Logger logger = LogManager.getLogger(TagService.class);
+
     /**
      * validates value and sends save request to tag dao class
      * @param value value to be saved
@@ -45,7 +49,6 @@ public class TagService implements Service<TagDto> {
         validator.validate(value, false);
 
         if (!Objects.isNull(dao.findTagByName(value.getName()))){
-            System.out.println("we");
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.TAG_NAME_MUST_BE_UNIQUE);
         }
 
@@ -53,6 +56,7 @@ public class TagService implements Service<TagDto> {
         try {
             savedTag = dao.saveEntity(converter.convert(value));
         } catch (DataAccessException e){
+            logger.error(e);
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
@@ -68,7 +72,7 @@ public class TagService implements Service<TagDto> {
      * @throws ServiceException always, update operation is not supported for tags
      */
     @Override
-    public Boolean update(TagDto value) throws ServiceException {
+    public TagDto update(TagDto value) throws ServiceException {
         throw new ServiceException(ExceptionCode.OPERATION_IS_NOT_SUPPORTED);
     }
 
@@ -81,6 +85,7 @@ public class TagService implements Service<TagDto> {
         try {
             result = dao.deleteEntity(id);
         } catch (DataAccessException e){
+            logger.error(e);
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
@@ -96,6 +101,7 @@ public class TagService implements Service<TagDto> {
         try {
             daoResult = dao.findEntityById(id);
         } catch (DataAccessException e){
+            logger.error(e);
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
@@ -135,6 +141,7 @@ public class TagService implements Service<TagDto> {
         try {
             daoResult = dao.findTagByName(name);
         } catch (DataAccessException e){
+            logger.error(e);
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 

@@ -22,9 +22,9 @@ public interface Dao<T extends Entity> {
      * updates entity with entity.id(), null fields won't be updated
      * @param entity entity to be updated
      * @throws org.springframework.dao.DataAccessException if database error occurred
-     * @return true if entity updated successfully, false otherwise
+     * @return updated entity
      */
-    Boolean updateEntity(T entity);
+    T updateEntity(T entity);
 
     /**
      * deletes entity with provided id

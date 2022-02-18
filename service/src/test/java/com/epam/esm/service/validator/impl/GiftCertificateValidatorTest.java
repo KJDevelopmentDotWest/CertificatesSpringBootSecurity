@@ -1,7 +1,5 @@
 package com.epam.esm.service.validator.impl;
 
-import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
-import com.epam.esm.dao.model.tag.Tag;
 import com.epam.esm.service.ServiceTestConfig;
 import com.epam.esm.service.dto.giftcertificate.GiftCertificateDto;
 import com.epam.esm.service.dto.tag.TagDto;
@@ -16,8 +14,6 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = ServiceTestConfig.class, loader = AnnotationConfigContextLoader.class)
@@ -35,14 +31,41 @@ class GiftCertificateValidatorTest {
             LocalDateTime.MIN,
             List.of(new TagDto(1, "first tag"), new TagDto(2, "secondTag")));
 
-    private final GiftCertificateDto giftCertificateDtoInvalid = new GiftCertificateDto(null,
-            "name",
+    private final GiftCertificateDto giftCertificateDtoAllFieldsNull = new GiftCertificateDto(null,
             null,
-            200.5D,
-            30L,
+            null,
+            null,
+            null,
+           null,
+            null,
+            null);
+
+    private final GiftCertificateDto giftCertificateDtoAllShortName = new GiftCertificateDto(-1,
+            "a",
+            null,
+            -1.0,
+            -1L,
             LocalDateTime.MAX,
             LocalDateTime.MAX,
-            List.of(new TagDto(1, "first tag"), new TagDto(2, "secondTag")));
+            null);
+
+    private final GiftCertificateDto giftCertificateDtoAllLongName = new GiftCertificateDto(null,
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            null,
+            null,
+            null,
+            null,
+            null,
+            List.of(new TagDto(1, null), new TagDto(2, "secondTag")));
+
+    private final GiftCertificateDto giftCertificateDtoStartsEndsWithWhiteSpace = new GiftCertificateDto(null,
+            " aaa ",
+            " aaa ",
+            null,
+            null,
+            null,
+            null,
+            null);
 
     private final GiftCertificateDto giftCertificateUpdateDtoNullId = new GiftCertificateDto(null,
             "name",
@@ -70,7 +93,12 @@ class GiftCertificateValidatorTest {
 
     @Test
     public void validateNegativeTest() {
-        Assertions.assertThrows(ServiceException.class, () -> validator.validate(giftCertificateDtoInvalid, true));
+        Assertions.assertThrows(ServiceException.class, () -> validator.validate(giftCertificateDtoAllFieldsNull, true));
+        Assertions.assertThrows(ServiceException.class, () -> validator.validate(null, true));
+        Assertions.assertThrows(ServiceException.class, () -> validator.validate(null, true, true));
+        Assertions.assertThrows(ServiceException.class, () -> validator.validate(giftCertificateDtoAllShortName, true));
+        Assertions.assertThrows(ServiceException.class, () -> validator.validate(giftCertificateDtoAllLongName, true));
+        Assertions.assertThrows(ServiceException.class, () -> validator.validate(giftCertificateDtoStartsEndsWithWhiteSpace, true));
     }
 
     @Test

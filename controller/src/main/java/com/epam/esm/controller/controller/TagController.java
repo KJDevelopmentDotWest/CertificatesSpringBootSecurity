@@ -4,8 +4,10 @@ import com.epam.esm.controller.exceptionhandler.ExceptionHandlerSupport;
 import com.epam.esm.service.dto.tag.TagDto;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.impl.TagService;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,7 +20,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.RequestContext;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 @RestController
 @RequestMapping("/tags")
@@ -42,25 +46,26 @@ public class TagController {
 
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<Object> delete(@PathVariable("id") Integer id) throws ServiceException {
-        service.delete(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(service.delete(id), HttpStatus.OK);
     }
 
     @PostMapping()
-    public ResponseEntity<Object> create(@RequestBody TagDto tagDto) throws ServiceException {
-        service.create(tagDto);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+    public ResponseEntity<TagDto> create(@RequestBody TagDto tagDto) throws ServiceException {
+        TagDto createdDto = service.create(tagDto);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Location", createdDto.getId().toString());
+        return new ResponseEntity<>(createdDto, headers, HttpStatus.CREATED);
     }
 
     @PutMapping(value = "/{id}")
-    public ResponseEntity<Object> update(@PathVariable("id") Integer id, @RequestBody TagDto tagDto) throws ServiceException {
+    public ResponseEntity<TagDto> update(@PathVariable("id") Integer id, @RequestBody TagDto tagDto) throws ServiceException {
         tagDto.setId(id);
-        service.update(tagDto);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(service.update(tagDto), HttpStatus.OK);
     }
 
-    @ExceptionHandler({ServiceException.class})
-    public ResponseEntity<String> handleException(ServiceException serviceException){
-        return exceptionHandlerSupport.handleException(serviceException, LocaleContextHolder.getLocale());
+    @ExceptionHandler({Exception.class})
+    public ResponseEntity<Object> handleException(Exception exception, HttpServletRequest request){
+        RequestContext requestContext = new RequestContext(request);
+        return exceptionHandlerSupport.handleException(exception, requestContext.getLocale());
     }
 }

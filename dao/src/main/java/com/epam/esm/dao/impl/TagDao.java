@@ -53,17 +53,16 @@ public class TagDao implements Dao<Tag> {
             return preparedStatement;
         }, keyHolder);
 
-        System.out.println(keyHolder.getKey());
-
         return findEntityById((Integer) keyHolder.getKey());
     }
 
     @Override
-    public Boolean updateEntity(Tag entity) {
+    public Tag updateEntity(Tag entity) {
         if (Objects.nonNull(entity.getName())){
-            return jdbcTemplate.update(SQL_UPDATE_TAG_BY_ID, entity.getName(), entity.getId(), entity.getName()) != 0;
+            jdbcTemplate.update(SQL_UPDATE_TAG_BY_ID, entity.getName(), entity.getId());
+            return findEntityById(entity.getId());
         } else {
-            return false;
+            return null;
         }
     }
 
@@ -87,7 +86,7 @@ public class TagDao implements Dao<Tag> {
     /**
      * returns tag with provided name
      * @param name name to be searched
-     * @return tag with provided name, null otherwise
+     * @return tag with provided name, null if there is no such tag
      */
     public Tag findTagByName(String name){
         return jdbcTemplate.query(SQL_FIND_TAG_BY_NAME, tagMapper, name).stream().findAny().orElse(null);

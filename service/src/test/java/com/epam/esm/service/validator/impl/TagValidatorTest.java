@@ -19,6 +19,10 @@ class TagValidatorTest {
     private TagValidator validator;
 
     private final TagDto tagDto = new TagDto(1, "firstTag");
+    private final TagDto tagDtoNUllId = new TagDto(null, "firstTag");
+    private final TagDto tagDtoNegativeId = new TagDto(-1, " firstTag ");
+    private final TagDto tagDtoShortName = new TagDto(1, "");
+    private final TagDto tagDtoLongName = new TagDto(1, "aaaaaaaaaaaaaaaaaaaaaaaaa");
     private final TagDto tagDtoInvalid = new TagDto(1, null);
 
     @Test
@@ -29,5 +33,10 @@ class TagValidatorTest {
     @Test
     public void validateNegativeTest() {
         Assertions.assertThrows(ServiceException.class, () -> validator.validate(tagDtoInvalid, true));
+        Assertions.assertThrows(ServiceException.class, () -> validator.validate(null, true));
+        Assertions.assertThrows(ServiceException.class, () -> validator.validate(tagDtoNUllId, true));
+        Assertions.assertThrows(ServiceException.class, () -> validator.validate(tagDtoNegativeId, true));
+        Assertions.assertThrows(ServiceException.class, () -> validator.validate(tagDtoShortName, true));
+        Assertions.assertThrows(ServiceException.class, () -> validator.validate(tagDtoLongName, true));
     }
 }

@@ -9,7 +9,6 @@ import com.epam.esm.service.validator.api.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -47,8 +46,6 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         validateDescription(value.getDescription(), false);
         validatePrice(value.getPrice(), false);
         validateDuration(value.getDuration(), false);
-        validateCreateDate(value.getCreateDate(), false);
-        validateLastUpdateDate(value.getLastUpdateDate(), false);
         validateTags(value.getTags(), false);
 
         if (!exceptionMessages.isEmpty()){
@@ -77,8 +74,6 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         validateDescription(value.getDescription(), fieldsCanBeNull);
         validatePrice(value.getPrice(), fieldsCanBeNull);
         validateDuration(value.getDuration(), fieldsCanBeNull);
-        validateCreateDate(value.getCreateDate(), fieldsCanBeNull);
-        validateLastUpdateDate(value.getLastUpdateDate(), fieldsCanBeNull);
         validateTags(value.getTags(), fieldsCanBeNull);
 
         if (!exceptionMessages.isEmpty()){
@@ -91,7 +86,7 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
             exceptionMessages.add(ExceptionMessage.GIFT_CERTIFICATE_ID_CANNOT_BE_NULL);
             return;
         }
-        if (id < 0){
+        if (id < 1){
             exceptionMessages.add(ExceptionMessage.GIFT_CERTIFICATE_ID_CANNOT_BE_NEGATIVE);
         }
     }
@@ -161,34 +156,6 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
         if (duration < 0){
             exceptionMessages.add(ExceptionMessage.GIFT_CERTIFICATE_DURATION_IS_NEGATIVE);
-        }
-    }
-
-    private void validateCreateDate(LocalDateTime createDate, Boolean canBeNull) {
-
-        if (Objects.isNull(createDate)){
-            if (!canBeNull) {
-                exceptionMessages.add(ExceptionMessage.GIFT_CERTIFICATE_CREATE_DATE_CANNOT_BE_NULL);
-            }
-            return;
-        }
-
-        if (createDate.isAfter(LocalDateTime.now())){
-            exceptionMessages.add(ExceptionMessage.GIFT_CERTIFICATE_CREATE_DATE_CANNOT_POINT_TO_FUTURE);
-        }
-    }
-
-    private void validateLastUpdateDate(LocalDateTime lastUpdateDate, Boolean canBeNull) {
-
-        if (Objects.isNull(lastUpdateDate)){
-            if (!canBeNull) {
-                exceptionMessages.add(ExceptionMessage.GIFT_CERTIFICATE_LAST_UPDATE_DATE_CANNOT_BE_NULL);
-            }
-            return;
-        }
-
-        if (lastUpdateDate.isAfter(LocalDateTime.now())){
-            exceptionMessages.add(ExceptionMessage.GIFT_CERTIFICATE_LAST_UPDATE_DATE_CANNOT_POINT_TO_FUTURE);
         }
     }
 

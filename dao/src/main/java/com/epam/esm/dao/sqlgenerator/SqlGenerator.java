@@ -78,11 +78,17 @@ public class SqlGenerator {
                     .append(GIFT_CERTIFICATE_TABLE).append(DOT_SYMBOL).append(SQL_ID_COLUMN)
                     .append(EQUAL_SYMBOL).append(SQL_GIFT_CERTIFICATE_ID_COLUMN)
                     .append(WHITE_SPACE_SYMBOL).append(SQL_WHERE)
-                    .append(SQL_ID_COLUMN).append(EQUAL_QUESTION_MARK_SYMBOL).append(WHITE_SPACE_SYMBOL);
+                    .append(SQL_TAG_ID_COLUMN).append(EQUAL_QUESTION_MARK_SYMBOL).append(WHITE_SPACE_SYMBOL);
         }
 
         if (Objects.nonNull(whereStringLikeColumnNames) && !whereStringLikeColumnNames.isEmpty()){
-            sqlFindWithParametersString.append(SQL_WHERE);
+
+            if (!filterByTag){
+                sqlFindWithParametersString.append(SQL_WHERE);
+            } else {
+                sqlFindWithParametersString.append(SQL_AND);
+            }
+
             for (int i = 0; i < whereStringLikeColumnNames.size(); i++){
                 sqlFindWithParametersString.append(whereStringLikeColumnNames.get(i)).append(WHITE_SPACE_SYMBOL).append(SQL_LIKE)
                         .append(QUESTION_SYMBOL).append(WHITE_SPACE_SYMBOL);
@@ -104,7 +110,6 @@ public class SqlGenerator {
                 }
             }
         }
-
         return sqlFindWithParametersString.toString();
     }
 
@@ -120,27 +125,26 @@ public class SqlGenerator {
         sqlUpdateString.append(SQL_UPDATE).append(GIFT_CERTIFICATE_TABLE).append(WHITE_SPACE_SYMBOL).append(SQL_SET);
 
         if (Objects.nonNull(entity.getName())){
-            isFirst = false;
             sqlUpdateString.append(SQL_NAME_COLUMN);
             sqlUpdateString.append(EQUAL_QUESTION_MARK_SYMBOL);
+            isFirst = false;
         }
 
         if (Objects.nonNull(entity.getDescription())){
-
             if (!isFirst){
                 sqlUpdateString.append(COMMA_SYMBOL);
+            } else {
                 isFirst = false;
             }
 
             sqlUpdateString.append(SQL_DESCRIPTION_COLUMN);
             sqlUpdateString.append(EQUAL_QUESTION_MARK_SYMBOL);
-
         }
 
         if (Objects.nonNull(entity.getPrice())){
-
             if (!isFirst){
                 sqlUpdateString.append(COMMA_SYMBOL);
+            } else {
                 isFirst = false;
             }
 
@@ -150,34 +154,24 @@ public class SqlGenerator {
         }
 
         if (Objects.nonNull(entity.getDuration())){
-
             if (!isFirst){
                 sqlUpdateString.append(COMMA_SYMBOL);
+            } else {
                 isFirst = false;
             }
 
             sqlUpdateString.append(SQL_DURATION_COLUMN);
             sqlUpdateString.append(EQUAL_QUESTION_MARK_SYMBOL);
-
-        }
-
-        if (Objects.nonNull(entity.getCreateDate())){
-
-            if (!isFirst){
-                sqlUpdateString.append(COMMA_SYMBOL);
-                isFirst = false;
-            }
-
-            sqlUpdateString.append(SQL_CREATE_DATE_COLUMN);
-            sqlUpdateString.append(EQUAL_QUESTION_MARK_SYMBOL);
-
         }
 
         if (!isFirst){
             sqlUpdateString.append(COMMA_SYMBOL);
-            sqlUpdateString.append(SQL_LAST_UPDATE_DATE_COLUMN);
-            sqlUpdateString.append(EQUAL_QUESTION_MARK_SYMBOL);
         }
+
+        sqlUpdateString.append(WHITE_SPACE_SYMBOL)
+                .append(SQL_LAST_UPDATE_DATE_COLUMN)
+                .append(EQUAL_QUESTION_MARK_SYMBOL)
+                .append(WHITE_SPACE_SYMBOL);
 
         sqlUpdateString.append(SQL_WHERE).append(SQL_ID_COLUMN).append(EQUAL_QUESTION_MARK_SYMBOL);
 

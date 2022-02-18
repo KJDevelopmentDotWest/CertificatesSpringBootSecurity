@@ -46,7 +46,7 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
         try {
             savedGiftCertificate = dao.saveEntity(converter.convert(value));
         } catch (DataAccessException e){
-            System.out.println(e.getMessage());
+            logger.error(e);
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
@@ -58,14 +58,20 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
     }
 
     @Override
-    public Boolean update(GiftCertificateDto value) throws ServiceException {
+    public GiftCertificateDto update(GiftCertificateDto value) throws ServiceException {
         validator.validate(value, true, true);
 
-        Boolean result;
+        GiftCertificateDto result;
 
         try {
-            result = dao.updateEntity(converter.convert(value));
+            GiftCertificate daoResult = dao.updateEntity(converter.convert(value));
+            if (!Objects.isNull(daoResult)){
+                result = converter.convert(daoResult);
+            } else {
+                result = null;
+            }
         } catch (DataAccessException e){
+            logger.error(e);
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
@@ -80,6 +86,7 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
         try {
             result = dao.deleteEntity(id);
         } catch (DataAccessException e){
+            logger.error(e);
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
@@ -94,6 +101,7 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
         try {
             result = dao.findEntityById(id);
         } catch (DataAccessException e){
+            logger.error(e);
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
@@ -111,6 +119,7 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
         try {
             daoResult = dao.findAllEntities();
         } catch (DataAccessException e){
+            logger.error(e);
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
@@ -119,7 +128,7 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
 
     /**
      * returns filtered list of gift certificates
-     * @param tagId id of tag to be searched, null if no need to search by tag
+     * @param tagName name of tag to be searched, null if no need to search by tag
      * @param namePart part of name to be filtered, null if no need to filter by name part
      * @param descriptionPart part of description to be filtered, null if no need to filter description part
      * @param sortByName true for sorting by name, false otherwise
@@ -128,12 +137,13 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
      * @return list of gift certificates that match parameters
      * @throws ServiceException if database error occurred
      */
-    public List<GiftCertificateDto> getAllWithParameters(Integer tagId, String namePart, String descriptionPart, Boolean sortByName, Boolean sortByDate, Boolean ascending) throws ServiceException {
+    public List<GiftCertificateDto> getAllWithParameters(String tagName, String namePart, String descriptionPart, Boolean sortByName, Boolean sortByDate, Boolean ascending) throws ServiceException {
         List<GiftCertificate> daoResult;
 
         try {
-            daoResult = dao.findGiftCertificatesWithParameters(tagId, namePart, descriptionPart, sortByName, sortByDate, ascending);
+            daoResult = dao.findGiftCertificatesWithParameters(tagName, namePart, descriptionPart, sortByName, sortByDate, ascending);
         } catch (DataAccessException e){
+            logger.error(e);
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 

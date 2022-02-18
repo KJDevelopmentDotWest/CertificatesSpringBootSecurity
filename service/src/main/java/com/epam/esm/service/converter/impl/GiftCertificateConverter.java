@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -20,7 +21,12 @@ public class GiftCertificateConverter implements Converter<GiftCertificate, Gift
     @Override
     public GiftCertificate convert(GiftCertificateDto value) {
         Converter<Tag, TagDto> tagConverter = new TagConverter();
-        List<Tag> tags = value.getTags().stream().map(tagConverter::convert).toList();
+        List<Tag> tags;
+        if (!Objects.isNull(value.getTags())){
+            tags = value.getTags().stream().map(tagConverter::convert).toList();
+        } else {
+            tags = null;
+        }
         return new GiftCertificate(value.getId(),
                 value.getName(),
                 value.getDescription(),

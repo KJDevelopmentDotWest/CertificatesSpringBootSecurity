@@ -1,14 +1,18 @@
 package com.epam.esm.controller.exceptionhandler;
 
 import com.epam.esm.service.exception.ServiceException;
-import org.json.JSONObject;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -22,22 +26,38 @@ public class ExceptionHandlerSupport {
 
     private ResourceBundle resourceBundle;
 
-    public ResponseEntity<String> handleException(ServiceException exception, Locale locale){
+    private static final Logger logger = LogManager.getLogger(ExceptionHandlerSupport.class);
+
+    public ResponseEntity<Object> handleException(Exception exception, Locale locale){
+        Map<String, Object> hashMap = new HashMap<>();
         resourceBundle = ResourceBundle.getBundle("locale", locale);
-        JSONObject response = new JSONObject();
 
-        List<String> exceptionMessages = new ArrayList<>();
+        if (exception instanceof ServiceException serviceException){
+            logger.error(serviceException);
+            logger.error(serviceException.getExceptionCode());
+            logger.error(serviceException.getExceptionMessages());
 
-        exception.getExceptionMessages().forEach(exceptionMessage -> {
-            try {
-                exceptionMessages.add(resourceBundle.getString(exceptionMessage.toString()));
-            } catch (MissingResourceException ignored){
-                exceptionMessages.add(resourceBundle.getString("UNKNOWN_EXCEPTION"));
-            }
-        });
+            List<String> exceptionMessages = new ArrayList<>();
 
-        response.put("message", exceptionMessages);
-        response.put("internalExceptionCode", exception.getExceptionCode().getExceptionCode());
-        return new ResponseEntity<>(response.toString(), Optional.of(HttpStatus.valueOf(exception.getExceptionCode().getHttpStatus())).orElse(HttpStatus.INTERNAL_SERVER_ERROR) );
+            serviceException.getExceptionMessages().forEach(exceptionMessage -> {
+                try {
+                    exceptionMessages.add(resourceBundle.getString(exceptionMessage.toString()));
+                } catch (MissingResourceException ignored){
+                    exceptionMessages.add(resourceBundle.getString("UNKNOWN_EXCEPTION"));
+                }
+            });
+
+            hashMap.put("message", exceptionMessages);
+            hashMap.put("internalExceptionCode", serviceException.getExceptionCode().getExceptionCode());
+            return new ResponseEntity<>(hashMap, Optional.of(HttpStatus.valueOf(serviceException.getExceptionCode().getHttpStatus())).orElse(HttpStatus.INTERNAL_SERVER_ERROR) );
+        } else if (exception instanceof HttpMessageNotReadableException parseException){
+            logger.error(parseException);
+            hashMap.put("message", resourceBundle.getString("PARSE_EXCEPTION"));
+            return new ResponseEntity<>(hashMap, HttpStatus.BAD_REQUEST);
+        } else {
+            logger.error(exception);
+            hashMap.put("message", resourceBundle.getString("UNKNOWN_EXCEPTION"));
+            return new ResponseEntity<>(hashMap, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

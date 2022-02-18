@@ -68,8 +68,8 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
             preparedStatement.setString(2, entity.getDescription());
             preparedStatement.setDouble(3, entity.getPrice());
             preparedStatement.setLong(4, entity.getDuration());
-            preparedStatement.setTimestamp(5, Timestamp.valueOf(entity.getCreateDate()));
-            preparedStatement.setTimestamp(6, Timestamp.valueOf(entity.getLastUpdateDate()));
+            preparedStatement.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
+            preparedStatement.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
             return preparedStatement;
         }, keyHolder);
 
@@ -79,7 +79,8 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
             Integer tagIdToBeAdded = tag.getId();
 
-            if (Objects.isNull(tag.getId())){
+            if (Objects.isNull(tag.getId())
+                    || Objects.isNull(tagDao.findEntityById(tag.getId()))){
                 Tag foundByName = tagDao.findTagByName(tag.getName());
                 if (Objects.isNull(foundByName)){
                     tagIdToBeAdded = tagDao.saveEntity(tag).getId();
@@ -96,7 +97,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     @Override
     @Transactional
-    public Boolean updateEntity(GiftCertificate entity) {
+    public GiftCertificate updateEntity(GiftCertificate entity) {
 
         if (Objects.nonNull(entity.getTags())){
             updateGiftCertificateToTagEntries(entity);
@@ -120,19 +121,13 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
             valuesToInsert.add(entity.getDuration());
         }
 
-        if (Objects.nonNull(entity.getCreateDate())){
-            valuesToInsert.add(entity.getCreateDate());
-        }
-
-        if (!valuesToInsert.isEmpty()){
+        if (!valuesToInsert.isEmpty() || Objects.nonNull(entity.getTags())){
+            entity.setLastUpdateDate(LocalDateTime.now());
             valuesToInsert.add(LocalDateTime.now());
-
             valuesToInsert.add(entity.getId());
-
-            return jdbcTemplate.update(SqlGenerator.generateUpdateGiftCertificateColumnsString(entity), valuesToInsert.toArray()) != 0;
-        } else {
-            return false;
+            jdbcTemplate.update(SqlGenerator.generateUpdateGiftCertificateColumnsString(entity), valuesToInsert.toArray());
         }
+        return findEntityById(entity.getId());
     }
 
     @Override
@@ -169,7 +164,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     /**
      * returns filtered list of gift certificates
-     * @param tagId id of tag to be searched, null if no need to search by tag
+     * @param tagName name of tag to be searched, null if no need to search by tag
      * @param namePart part of name to be filtered, null if no need to filter by name part
      * @param descriptionPart part of description to be filtered, null if no need to filter description part
      * @param sortByName true for sorting by name, false otherwise
@@ -178,14 +173,20 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
      * @throws org.springframework.dao.DataAccessException if database error occurred
      * @return list of gift certificates that match parameters
      */
-    public List<GiftCertificate> findGiftCertificatesWithParameters (Integer tagId, String namePart, String descriptionPart, Boolean sortByName, Boolean sortByDate, Boolean ascending){
+    public List<GiftCertificate> findGiftCertificatesWithParameters (String tagName, String namePart, String descriptionPart, Boolean sortByName, Boolean sortByDate, Boolean ascending){
 
         List<String> whereStringLikeColumnNames = new ArrayList<>();
         List<String> orderByColumnNames = new ArrayList<>();
         List<Object> objectsToAdd = new ArrayList<>();
 
-        if (Objects.nonNull(tagId)){
-            objectsToAdd.add(tagId);
+        if (Objects.nonNull(tagName)){
+            Tag tag = tagDao.findTagByName(tagName);
+
+            if (Objects.nonNull(tag)){
+                objectsToAdd.add(tag.getId());
+            } else {
+                return new ArrayList<>();
+            }
         }
 
         if (Objects.nonNull(namePart)){
@@ -206,7 +207,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
             orderByColumnNames.add(SQL_LAST_UPDATE_DATE_COLUMN);
         }
 
-        String sqlQuery = SqlGenerator.generateSQLForGiftCertificateFindWithParameters(Objects.nonNull(tagId), whereStringLikeColumnNames, orderByColumnNames, Optional.of(ascending).orElse(true));
+        String sqlQuery = SqlGenerator.generateSQLForGiftCertificateFindWithParameters(Objects.nonNull(tagName), whereStringLikeColumnNames, orderByColumnNames, Optional.of(ascending).orElse(true));
         List<GiftCertificate> result = jdbcTemplate.query(sqlQuery, new GiftCertificateMapper(), objectsToAdd.toArray());
         addTagsToGiftCertificates(result);
         return result;
@@ -214,21 +215,30 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     private void updateGiftCertificateToTagEntries(GiftCertificate giftCertificate) {
         List<Tag> currentTags = giftCertificate.getTags();
-        List<Tag> currentTagsWithNullId = currentTags.stream().filter(tag -> Objects.isNull(tag.getId())).toList();
-        List<Tag> currentTagsWithNonNullId = currentTags.stream().filter(tag -> Objects.nonNull(tag.getId())).toList();
+
+        //tags with id that not present in database considered as tags with null id
+        currentTags.forEach(tag -> {
+            if (Objects.nonNull(tag.getId()) && Objects.isNull(tagDao.findEntityById(tag.getId()))){
+                System.out.println(tag.getId());
+                tag.setId(null);
+            }
+        });
+
+        List<Tag> currentTagsWithNullId = currentTags.stream().filter(tag -> Objects.isNull(tag.getId())).collect(Collectors.toCollection(ArrayList::new));
+        List<Tag> currentTagsWithNonNullId = currentTags.stream().filter(tag -> Objects.nonNull(tag.getId())).collect(Collectors.toCollection(ArrayList::new));
         List<Integer> currentTagsId = currentTagsWithNonNullId.stream().map(Tag::getId).collect(Collectors.toCollection(ArrayList::new));
         List<Integer> previousTagsId;
 
         currentTagsWithNullId.forEach(tag -> {
-            Integer tagIdToBeAdded;
+            Tag tagToBeAdded;
             Tag foundByName = tagDao.findTagByName(tag.getName());
             if (Objects.isNull(foundByName)){
-                tagIdToBeAdded = tagDao.saveEntity(tag).getId();
+                tagToBeAdded = tagDao.saveEntity(tag);
             } else {
-                tagIdToBeAdded = foundByName.getId();
+                tagToBeAdded = foundByName;
             }
-            currentTagsId.add(tagIdToBeAdded);
-            jdbcTemplate.update(SQL_SAVE_GIFT_CERTIFICATE_TO_TAG_ENTRY, giftCertificate.getId(), tagIdToBeAdded);
+            currentTagsId.add(tagToBeAdded.getId());
+            currentTagsWithNonNullId.add(tagToBeAdded);
         });
 
         previousTagsId = jdbcTemplate.query(SQL_FIND_TAGS_ID_BY_GIFT_CERTIFICATE_ID, integerMapper, giftCertificate.getId());
@@ -252,9 +262,12 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
             jdbcTemplate.update(SQL_SAVE_GIFT_CERTIFICATE_TO_TAG_ENTRY, giftCertificate.getId(), tag.getId());
         }
 
+        ArrayList<Object> queryParams = new ArrayList<>(tagsIdToRemove);
+        queryParams.add(0, giftCertificate.getId());
+
         if (tagsIdToRemove.size() > 0) {
             jdbcTemplate.update(SqlGenerator.generateDeleteGiftCertificateToTagEntriesByGiftCertificateAndTagsIds(tagsIdToRemove.size()),
-                    giftCertificate.getId(), tagsIdToRemove.toArray());
+                    queryParams.toArray());
         }
     }
 

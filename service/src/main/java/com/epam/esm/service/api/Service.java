@@ -21,10 +21,10 @@ public interface Service<T extends Dto> {
     /**
      * validates value and sends update request to corresponding dao class
      * @param value value to be updated
-     * @return true if value updated successfully, false otherwise
+     * @return value if value updated successfully
      * @throws ServiceException if value is invalid or database error occurred
      */
-    Boolean update(T value) throws ServiceException;
+    T update(T value) throws ServiceException;
 
     /**
      * validates id and sends delete request to corresponding dao class
