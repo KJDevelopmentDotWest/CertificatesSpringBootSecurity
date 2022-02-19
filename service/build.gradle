@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation(project(":dao"))
+
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.14.1'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+
+    implementation 'org.springframework:spring-jdbc:5.3.15'
+    implementation 'org.springframework:spring-context:5.3.15'
+
+    compileOnly 'org.projectlombok:lombok:1.18.22'
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+
+    testImplementation group: 'org.springframework', name: 'spring-test', version: '5.3.15'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '4.3.1'
+
+}
+
+test {
+    useJUnitPlatform()
+}
