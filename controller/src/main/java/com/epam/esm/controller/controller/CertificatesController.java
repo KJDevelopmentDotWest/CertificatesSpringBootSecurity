@@ -1,7 +1,6 @@
 package com.epam.esm.controller.controller;
 
 import com.epam.esm.controller.exceptionhandler.ExceptionHandlerSupport;
-import com.epam.esm.controller.responseobject.GiftCertificateResponseObject;
 import com.epam.esm.service.dto.giftcertificate.GiftCertificateDto;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.impl.GiftCertificateService;
@@ -37,7 +36,7 @@ public class CertificatesController {
     private ExceptionHandlerSupport exceptionHandlerSupport;
 
     @GetMapping()
-    public ResponseEntity<List<GiftCertificateResponseObject>> getAll(
+    public ResponseEntity<List<GiftCertificateDto>> getAll(
             @RequestParam(value = "tagName", required = false) String tagName,
             @RequestParam(value = "namePart", required = false ) String namePart,
             @RequestParam(value = "descriptionPart", required = false ) String descriptionPart,
@@ -57,24 +56,23 @@ public class CertificatesController {
             sortByDate = names.contains("date");
         }
 
-        List<GiftCertificateResponseObject> giftCertificateResponseObjects;
+        List<GiftCertificateDto> giftCertificateDtos;
         if ((Objects.isNull(tagName)
                 && Objects.isNull(namePart)
                 && Objects.isNull(descriptionPart)
                 && Objects.isNull(sortBy))){
-            giftCertificateResponseObjects = service.getAll().stream().map(GiftCertificateResponseObject::new).toList();
+            giftCertificateDtos = service.getAll();
         } else {
-            giftCertificateResponseObjects = service.getAllWithParameters(tagName, namePart, descriptionPart, sortByName, sortByDate, ascendingBoolean)
-                    .stream().map(GiftCertificateResponseObject::new).toList();
+            giftCertificateDtos = service.getAllWithParameters(tagName, namePart, descriptionPart, sortByName, sortByDate, ascendingBoolean);
         }
-        return new ResponseEntity<>(giftCertificateResponseObjects, HttpStatus.OK);
+        return new ResponseEntity<>(giftCertificateDtos, HttpStatus.OK);
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<GiftCertificateResponseObject> getById(@PathVariable("id") Integer id) throws ServiceException {
+    public ResponseEntity<GiftCertificateDto> getById(@PathVariable("id") Integer id) throws ServiceException {
         GiftCertificateDto giftCertificateDto = service.getById(id);
 
-        return new ResponseEntity<>(new GiftCertificateResponseObject(giftCertificateDto), HttpStatus.OK);
+        return new ResponseEntity<>(giftCertificateDto, HttpStatus.OK);
     }
 
     @DeleteMapping(value = "/{id}")
@@ -83,17 +81,17 @@ public class CertificatesController {
     }
 
     @PostMapping()
-    public ResponseEntity<GiftCertificateResponseObject> create(@RequestBody GiftCertificateDto giftCertificateDto) throws ServiceException {
+    public ResponseEntity<GiftCertificateDto> create(@RequestBody GiftCertificateDto giftCertificateDto) throws ServiceException {
         GiftCertificateDto createdDto = service.create(giftCertificateDto);
         HttpHeaders headers = new HttpHeaders();
         headers.add("Location", createdDto.getId().toString());
-        return new ResponseEntity<>(new GiftCertificateResponseObject(createdDto), headers, HttpStatus.CREATED);
+        return new ResponseEntity<>(createdDto, headers, HttpStatus.CREATED);
     }
 
     @PutMapping(value = "/{id}")
-    public ResponseEntity<GiftCertificateResponseObject> update(@PathVariable("id") Integer id, @RequestBody GiftCertificateDto giftCertificateDto) throws ServiceException {
+    public ResponseEntity<GiftCertificateDto> update(@PathVariable("id") Integer id, @RequestBody GiftCertificateDto giftCertificateDto) throws ServiceException {
         giftCertificateDto.setId(id);
-        return new ResponseEntity<>(new GiftCertificateResponseObject(service.update(giftCertificateDto)), HttpStatus.OK);
+        return new ResponseEntity<>(service.update(giftCertificateDto), HttpStatus.OK);
     }
 
     @ExceptionHandler({Exception.class})

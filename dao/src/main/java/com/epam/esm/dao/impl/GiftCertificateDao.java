@@ -1,7 +1,7 @@
 package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
-import com.epam.esm.dao.mapper.GiftCertificateMapper;
+import com.epam.esm.dao.hibernate.JpaUtil;
 import com.epam.esm.dao.mapper.IdMapper;
 import com.epam.esm.dao.model.tag.Tag;
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
@@ -10,18 +10,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.PreparedStatement;
-import java.sql.Timestamp;
+import javax.persistence.*;
+import javax.persistence.criteria.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +33,8 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     @Autowired
     private TagDao tagDao;
+
+    private final EntityManagerFactory entityManagerFactory = JpaUtil.getEntityManagerFactory();
 
     private static final Logger logger = LogManager.getLogger(GiftCertificateDao.class);
 
@@ -54,111 +53,86 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     private static final String SQL_DESCRIPTION_COLUMN = "description";
     private static final String SQL_LAST_UPDATE_DATE_COLUMN = "last_update_date";
 
-    private final GiftCertificateMapper mapper = new GiftCertificateMapper();
     private final IdMapper integerMapper = new IdMapper();
 
     @Override
     @Transactional
     public GiftCertificate saveEntity(GiftCertificate entity) {
-        KeyHolder keyHolder = new GeneratedKeyHolder();
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement preparedStatement = connection.prepareStatement(SQL_SAVE_GIFT_CERTIFICATE, new String[] {"id"});
-            preparedStatement.setString(1, entity.getName());
-            preparedStatement.setString(2, entity.getDescription());
-            preparedStatement.setDouble(3, entity.getPrice());
-            preparedStatement.setLong(4, entity.getDuration());
-            preparedStatement.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
-            preparedStatement.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
-            return preparedStatement;
-        }, keyHolder);
+        entity.setCreateDate(LocalDateTime.now());
+        entity.setLastUpdateDate(LocalDateTime.now());
 
-        Integer generatedEntityId = keyHolder.getKeyAs(Integer.class);
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        entityManager.persist(entity);
+        entityManager.flush();
+        transaction.commit();
+        entityManager.close();
 
-        entity.getTags().forEach(tag -> {
-
-            Integer tagIdToBeAdded = tag.getId();
-
-            if (Objects.isNull(tag.getId())
-                    || Objects.isNull(tagDao.findEntityById(tag.getId()))){
-                Tag foundByName = tagDao.findTagByName(tag.getName());
-                if (Objects.isNull(foundByName)){
-                    tagIdToBeAdded = tagDao.saveEntity(tag).getId();
-                } else {
-                    tagIdToBeAdded = foundByName.getId();
-                }
-            }
-
-            jdbcTemplate.update(SQL_SAVE_GIFT_CERTIFICATE_TO_TAG_ENTRY, generatedEntityId, tagIdToBeAdded);
-        });
-
-        return findEntityById(generatedEntityId);
+        return findEntityById(entity.getId());
     }
 
     @Override
     @Transactional
     public GiftCertificate updateEntity(GiftCertificate entity) {
 
-        if (Objects.nonNull(entity.getTags())){
-            updateGiftCertificateToTagEntries(entity);
-        }
+        //todo add null fields support, tag update works not like expected, new tag support
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        entity.setLastUpdateDate(LocalDateTime.now());
 
-        List<Object> valuesToInsert = new ArrayList<>();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        entityManager.merge(entity);
+        entityManager.flush();
+        transaction.commit();
+        entityManager.close();
 
-        if (Objects.nonNull(entity.getName())){
-            valuesToInsert.add(entity.getName());
-        }
-
-        if (Objects.nonNull(entity.getDescription())){
-            valuesToInsert.add(entity.getDescription());
-        }
-
-        if (Objects.nonNull(entity.getPrice())){
-            valuesToInsert.add(entity.getPrice());
-        }
-
-        if (Objects.nonNull(entity.getDuration())){
-            valuesToInsert.add(entity.getDuration());
-        }
-
-        if (!valuesToInsert.isEmpty() || Objects.nonNull(entity.getTags())){
-            entity.setLastUpdateDate(LocalDateTime.now());
-            valuesToInsert.add(LocalDateTime.now());
-            valuesToInsert.add(entity.getId());
-            jdbcTemplate.update(SqlGenerator.generateUpdateGiftCertificateColumnsString(entity), valuesToInsert.toArray());
-        }
         return findEntityById(entity.getId());
     }
 
     @Override
-    @Transactional
+
     public Boolean deleteEntity(Integer id) {
-        jdbcTemplate.update(SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_GIFT_CERTIFICATE_ID, id);
-        return jdbcTemplate.update(SQL_DELETE_GIFT_CERTIFICATE_BY_ID, id) != 0;
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        GiftCertificate entity = findEntityById(id);
+
+        if (Objects.nonNull(entity)){
+            entity = entityManager.merge(entity);
+            entityManager.remove(entity);
+        }
+
+        entityManager.flush();
+        transaction.commit();
+        entityManager.close();
+        return Objects.nonNull(entity);
     }
 
     @Override
     public List<GiftCertificate> findAllEntities() {
-        List<GiftCertificate> result = jdbcTemplate.query(SQL_FIND_ALL_GIFT_CERTIFICATES, mapper);
 
-        addTagsToGiftCertificates(result);
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaQuery<GiftCertificate> criteriaQuery = criteriaBuilder.createQuery(GiftCertificate.class);
+
+        criteriaQuery.from(GiftCertificate.class);
+
+        Query query = entityManager.createQuery(criteriaQuery);
+
+        List<GiftCertificate> result = query.getResultList();
+
+        entityManager.close();
 
         return result;
     }
 
     @Override
     public GiftCertificate findEntityById(Integer id) {
-        GiftCertificate result = jdbcTemplate.query(SQL_FIND_GIFT_CERTIFICATE_BY_ID, mapper, id)
-                .stream().findAny().orElse(null);
-
-        List<Integer> tagsId = jdbcTemplate.query(SQL_FIND_TAGS_ID_BY_GIFT_CERTIFICATE_ID, integerMapper, id);
-
-        List<Tag> tags = tagDao.findTagsById(tagsId);
-
-        if (Objects.nonNull(result)){
-            result.setTags(tags);
-        }
-
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        GiftCertificate result = entityManager.find(GiftCertificate.class, id);
+        entityManager.close();
         return result;
     }
 
@@ -174,43 +148,40 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
      * @return list of gift certificates that match parameters
      */
     public List<GiftCertificate> findGiftCertificatesWithParameters (String tagName, String namePart, String descriptionPart, Boolean sortByName, Boolean sortByDate, Boolean ascending){
+        //todo this method not working as expected
+        List<GiftCertificate> result;
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
 
-        List<String> whereStringLikeColumnNames = new ArrayList<>();
-        List<String> orderByColumnNames = new ArrayList<>();
-        List<Object> objectsToAdd = new ArrayList<>();
+        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaQuery<GiftCertificate> criteriaQuery = criteriaBuilder.createQuery(GiftCertificate.class);
+        CriteriaQuery<Object[]> criteriaQueryObject = criteriaBuilder.createQuery(Object[].class);
+        Root<GiftCertificate> root = criteriaQuery.from(GiftCertificate.class);
+        Root<GiftCertificate> rootObject = criteriaQueryObject.from(GiftCertificate.class);
+        Join<Object, Object> tagJoin = root.join("tags");
+        Join<Object, Object> tagJoinObject = rootObject.join("tags");
+        List<Predicate> predicates = new ArrayList<>();
 
-        if (Objects.nonNull(tagName)){
-            Tag tag = tagDao.findTagByName(tagName);
+        predicates.add(criteriaBuilder.like(tagJoin.get("name"), "%" + tagName + "%"));
+        predicates.add(criteriaBuilder.like(tagJoin.get("name"), "%" + ",tag," + "%"));
 
-            if (Objects.nonNull(tag)){
-                objectsToAdd.add(tag.getId());
-            } else {
-                return new ArrayList<>();
-            }
-        }
+        //criteriaQuery = criteriaQuery.select(root).groupBy(root, criteriaBuilder.concat(tagJoin.get("name"), ",")).having(predicates.toArray(Predicate[]::new));
 
-        if (Objects.nonNull(namePart)){
-            whereStringLikeColumnNames.add(SQL_NAME_COLUMN);
-            objectsToAdd.add("%" + namePart + "%");
-        }
+        criteriaQueryObject.groupBy(rootObject);
+        criteriaQueryObject.multiselect(rootObject, criteriaBuilder.sum(tagJoinObject.get("id")));
 
-        if (Objects.nonNull(descriptionPart)){
-            whereStringLikeColumnNames.add(SQL_DESCRIPTION_COLUMN);
-            objectsToAdd.add("%" + descriptionPart + "%");
-        }
+        TypedQuery<Object[]> typedQuery = entityManager.createQuery(criteriaQueryObject);
 
-        if (Objects.nonNull(sortByName) && sortByName) {
-            orderByColumnNames.add(SQL_NAME_COLUMN);
-        }
+        List<Object[]> resultTyped = typedQuery.getResultList();
 
-        if (Objects.nonNull(sortByDate) && sortByDate) {
-            orderByColumnNames.add(SQL_LAST_UPDATE_DATE_COLUMN);
-        }
+        resultTyped.forEach(objects -> {
+            System.out.println(objects[0]);
+            System.out.println(objects[1]);
+            System.out.println("=============");
+        });
 
-        String sqlQuery = SqlGenerator.generateSQLForGiftCertificateFindWithParameters(Objects.nonNull(tagName), whereStringLikeColumnNames, orderByColumnNames, Optional.of(ascending).orElse(true));
-        List<GiftCertificate> result = jdbcTemplate.query(sqlQuery, new GiftCertificateMapper(), objectsToAdd.toArray());
-        addTagsToGiftCertificates(result);
-        return result;
+        //result = entityManager.createQuery(criteriaQuery).getResultList().stream().distinct().collect(Collectors.toList());
+
+        return null;
     }
 
     private void updateGiftCertificateToTagEntries(GiftCertificate giftCertificate) {

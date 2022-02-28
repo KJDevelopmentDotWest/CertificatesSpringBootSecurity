@@ -98,12 +98,8 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
         validator.validateIdNotNullAndPositive(id);
         GiftCertificate result;
 
-        try {
-            result = dao.findEntityById(id);
-        } catch (DataAccessException e){
-            logger.error(e);
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
+
+        result = dao.findEntityById(id);
 
         if (Objects.isNull(result)){
             throw new ServiceException(ExceptionCode.ENTITY_NOT_FOUND, ExceptionMessage.THERE_IS_NO_GIFT_CERTIFICATE_WITH_PROVIDED_ID);
@@ -116,12 +112,7 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
     public List<GiftCertificateDto> getAll() throws ServiceException {
         List<GiftCertificate> daoResult;
 
-        try {
-            daoResult = dao.findAllEntities();
-        } catch (DataAccessException e){
-            logger.error(e);
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
+        daoResult = dao.findAllEntities();
 
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
     }
