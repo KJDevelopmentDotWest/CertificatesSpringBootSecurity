@@ -5,6 +5,7 @@ import com.epam.esm.service.dto.giftcertificate.GiftCertificateDto;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.impl.GiftCertificateService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +20,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.RequestContext;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -36,15 +39,18 @@ public class CertificatesController {
     private ExceptionHandlerSupport exceptionHandlerSupport;
 
     @GetMapping()
-    public ResponseEntity<List<GiftCertificateDto>> getAll(
+    public CollectionModel<GiftCertificateDto> getAll(
             @RequestParam(value = "tagName", required = false) String tagName,
             @RequestParam(value = "namePart", required = false ) String namePart,
             @RequestParam(value = "descriptionPart", required = false ) String descriptionPart,
-            @RequestParam(value = "sortBy", required = false ) String sortBy) throws ServiceException {
+            @RequestParam(value = "sortBy", required = false ) String sortBy,
+            @RequestParam(value = "page", defaultValue = "1") String page) throws ServiceException {
 
         boolean sortByName = false;
         boolean sortByDate = false;
         boolean ascendingBoolean = true;
+        List<String> tagNames = new ArrayList<>();
+        int pageNumberInteger;
 
         if (Objects.nonNull(sortBy)){
             ascendingBoolean = !sortBy.startsWith("-");
@@ -56,23 +62,40 @@ public class CertificatesController {
             sortByDate = names.contains("date");
         }
 
+        if (Objects.nonNull(tagName)){
+            tagNames.addAll(List.of(tagName.split(",")));
+        }
+
+        try {
+            pageNumberInteger = Integer.parseInt(page);
+        } catch (NumberFormatException e){
+            pageNumberInteger = 1;
+        }
+
         List<GiftCertificateDto> giftCertificateDtos;
         if ((Objects.isNull(tagName)
                 && Objects.isNull(namePart)
                 && Objects.isNull(descriptionPart)
                 && Objects.isNull(sortBy))){
-            giftCertificateDtos = service.getAll();
+            giftCertificateDtos = service.getAll(pageNumberInteger);
         } else {
-            giftCertificateDtos = service.getAllWithParameters(tagName, namePart, descriptionPart, sortByName, sortByDate, ascendingBoolean);
+            giftCertificateDtos = service.getAllWithParameters(tagNames, namePart, descriptionPart, sortByName, sortByDate, ascendingBoolean, pageNumberInteger);
         }
-        return new ResponseEntity<>(giftCertificateDtos, HttpStatus.OK);
+        Link selfLink = linkTo(methodOn(CertificatesController.class).getAll(tagName, namePart, descriptionPart, sortBy, page)).withSelfRel();
+        return CollectionModel.of(giftCertificateDtos, selfLink);
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<GiftCertificateDto> getById(@PathVariable("id") Integer id) throws ServiceException {
+    public EntityModel<GiftCertificateDto> getById(@PathVariable("id") Integer id) throws ServiceException {
         GiftCertificateDto giftCertificateDto = service.getById(id);
 
-        return new ResponseEntity<>(giftCertificateDto, HttpStatus.OK);
+        Link selfLink = linkTo(methodOn(CertificatesController.class).getById(id)).withSelfRel();
+        Link create = linkTo(methodOn(CertificatesController.class).create(null)).withRel("create");
+        Link update = linkTo(methodOn(CertificatesController.class).update(id, null)).withRel("update");
+        Link delete = linkTo(methodOn(CertificatesController.class).delete(id)).withRel("delete");
+        Link root = linkTo(methodOn(CertificatesController.class).getAll(null, null, null, null, null)).withRel("all");
+
+        return EntityModel.of(giftCertificateDto, selfLink, create, update, delete, root);
     }
 
     @DeleteMapping(value = "/{id}")

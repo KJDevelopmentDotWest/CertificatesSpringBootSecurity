@@ -52,13 +52,7 @@ public class TagService implements Service<TagDto> {
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.TAG_NAME_MUST_BE_UNIQUE);
         }
 
-        Tag savedTag;
-        try {
-            savedTag = dao.saveEntity(converter.convert(value));
-        } catch (DataAccessException e){
-            logger.error(e);
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
+        Tag savedTag = dao.saveEntity(converter.convert(value));
 
         if (Objects.isNull(savedTag)){
             throw new ServiceException(ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
@@ -126,6 +120,27 @@ public class TagService implements Service<TagDto> {
     }
 
     /**
+     * returns list of tags by page number
+     * @param pageNumber number of page
+     * @return list of gift certificates by page number
+     */
+    public List<TagDto> getAll(Integer pageNumber) throws ServiceException {
+        List<Tag> daoResult;
+
+        if (pageNumber < 1){
+            pageNumber = 1;
+        }
+
+        try {
+            daoResult = dao.findAllEntities(pageNumber);
+        } catch (DataAccessException e){
+            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
+        }
+
+        return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    /**
      * returns tag with provided
      * @param name name to be searched
      * @return tag with provided name
@@ -150,5 +165,13 @@ public class TagService implements Service<TagDto> {
         }
 
         return converter.convert(daoResult);
+    }
+
+    /**
+     * returns most widely used tag for user with the highest cost of all orders
+     * @return most widely used tag for user with the highest cost of all orders
+     */
+    public TagDto getMostWidelyUsedTagForUserWithHighestCostOfAllOrders(){
+        return converter.convert(dao.findMostWidelyUsedTagForUserWithHighestCostOfAllOrders());
     }
 }

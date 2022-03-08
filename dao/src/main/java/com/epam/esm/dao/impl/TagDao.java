@@ -2,26 +2,19 @@ package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
 import com.epam.esm.dao.hibernate.JpaUtil;
-import com.epam.esm.dao.mapper.TagMapper;
+import com.epam.esm.dao.model.order.Order;
 import com.epam.esm.dao.model.tag.Tag;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
-import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.EntityTransaction;
+import javax.persistence.*;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Dao interface implementation for Tag with ability to perform CRUD operations
@@ -35,47 +28,35 @@ public class TagDao implements Dao<Tag> {
 
     private final EntityManagerFactory entityManagerFactory = JpaUtil.getEntityManagerFactory();
 
-    private static final Logger logger = LogManager.getLogger(TagDao.class);
+    private static final String GET_USER_ID_WITH_HIGHEST_COST_OF_ALL_ORDERS = "SELECT subselect.user_id FROM (" +
+            "SELECT user_id, sum(cost) as cost_sum FROM public.order_table GROUP BY user_id" +
+            ") as subselect GROUP BY user_id ORDER BY max(cost_sum) DESC LIMIT 1";
 
-    private static final String SQL_SAVE_TAG = "INSERT INTO tag (name) VALUES (?)";
+    private static final String GET_MOST_WIDELY_USED_TAG_ID_BY_USER_ID = "SELECT gift_certificate_to_tag.tag_id " +
+            "FROM public.order_table " +
+            "JOIN gift_certificate ON gift_certificate.id = order_table.gift_certificate_id " +
+            "JOIN gift_certificate_to_tag ON gift_certificate.id = gift_certificate_to_tag.gift_certificate_id " +
+            "WHERE order_table.user_id = ? GROUP BY gift_certificate_to_tag.tag_id ORDER BY count(gift_certificate_to_tag.tag_id) DESC LIMIT 1";
 
-    private static final String SQL_UPDATE_TAG_BY_ID = "UPDATE tag SET name = ? WHERE id = ?";
-
-    private static final String SQL_DELETE_TAG_BY_ID = "DELETE FROM tag WHERE id = ?";
-    private static final String SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_TAG_ID = "DELETE FROM gift_certificate_to_tag WHERE tag_id = ?";
-
-    private static final String SQL_FIND_ALL_TAGS = "SELECT id, name FROM tag";
-    private static final String SQL_FIND_TAG_BY_ID = "SELECT id, name FROM tag WHERE id = ?";
-    private static final String SQL_FIND_TAG_BY_NAME = "SELECT id, name FROM tag WHERE name = ?";
-
-    private final TagMapper tagMapper = new TagMapper();
+    private static final Integer MAX_ITEMS_IN_PAGE = 5;
 
     @Override
     @Transactional
     public Tag saveEntity(Tag entity) {
         EntityManager entityManager = entityManagerFactory.createEntityManager();
-
+        entity.setId(null);
         EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
         entityManager.persist(entity);
         entityManager.flush();
         transaction.commit();
         entityManager.close();
-
         return findEntityById(entity.getId());
     }
 
     @Override
     public Tag updateEntity(Tag entity) {
-//        //todo add null fields support
-//        Session session = entityManagerFactory.openSession();
-//        Transaction transaction = session.beginTransaction();
-//        session.update(entity);
-//        session.flush();
-//        transaction.commit();
-//        session.close();
-
-        return findEntityById(entity.getId());
+        return null;
     }
 
     @Override
@@ -93,20 +74,14 @@ public class TagDao implements Dao<Tag> {
 
     @Override
     public List<Tag> findAllEntities() {
-
-//        Session session = entityManagerFactory.openSession();
-//        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
-//        CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
-//
-//        Root<Tag> root = criteriaQuery.from(Tag.class);
-//
-//        Query<Tag> query = session.createQuery(criteriaQuery);
-//
-//        List<Tag> result = query.getResultList();
-//
-//        session.close();
-
-        return null;
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
+        criteriaQuery.from(Tag.class);
+        TypedQuery<Tag> query = entityManager.createQuery(criteriaQuery);
+        List<Tag> result = query.getResultList();
+        entityManager.close();
+        return result;
     }
 
     @Override
@@ -118,62 +93,60 @@ public class TagDao implements Dao<Tag> {
     }
 
     /**
+     * returns list of tags by page number
+     * @param pageNumber number of page
+     * @return list of gift certificates by page number
+     */
+    public List<Tag> findAllEntities(Integer pageNumber) {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
+        criteriaQuery.from(Tag.class);
+        TypedQuery<Tag> query = entityManager.createQuery(criteriaQuery).setFirstResult((pageNumber -1) * MAX_ITEMS_IN_PAGE).setMaxResults(MAX_ITEMS_IN_PAGE);
+        List<Tag> result = query.getResultList();
+        if (result.isEmpty() && pageNumber > 1){
+            entityManager.close();
+            findAllEntities(1);
+        }
+        entityManager.close();
+        return result;
+    }
+
+    /**
      * returns tag with provided name
      * @param name name to be searched
      * @return tag with provided name, null if there is no such tag
      */
     public Tag findTagByName(String name){
-//        Session session = entityManagerFactory.openSession();
-//        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
-//        CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
-//
-//        Root<Tag> root = criteriaQuery.from(Tag.class);
-//
-//        criteriaQuery.select(root).where(criteriaBuilder.like(root.get("name"), name));
-//
-//        Query<Tag> query = session.createQuery(criteriaQuery);
-//
-//        List<Tag> result = query.getResultList();
-//
-//        session.close();
-//
-//        return result.stream().findFirst().orElse(null);
-        return null;
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
+        Root<Tag> root = criteriaQuery.from(Tag.class);
+        criteriaQuery.select(root).where(criteriaBuilder.like(root.get("name"), name));
+        TypedQuery<Tag> query = entityManager.createQuery(criteriaQuery);
+        List<Tag> result = query.getResultList();
+        entityManager.close();
+        return result.stream().findFirst().orElse(null);
     }
 
-    public List<Tag> findTagsByNames(List<String> names){
-//        Session session = entityManagerFactory.openSession();
-//        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
-//        CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
-//
-//        Root<Tag> root = criteriaQuery.from(Tag.class);
-//
-//        criteriaQuery.select(root).where(root.get("name").in(names));
-//
-//        Query<Tag> query = session.createQuery(criteriaQuery);
-//
-//        List<Tag> result = query.getResultList();
-//
-//        session.close();
+    /**
+     * returns most widely used tag for user with the highest cost of all orders
+     * @return most widely used tag for user with the highest cost of all orders
+     */
+    public Tag findMostWidelyUsedTagForUserWithHighestCostOfAllOrders() {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
 
-        return null;
-    }
+        Query getUserIdWithHighestCostOfAllOrders = entityManager.createNativeQuery(GET_USER_ID_WITH_HIGHEST_COST_OF_ALL_ORDERS);
+        Integer userId = (Integer)getUserIdWithHighestCostOfAllOrders.getResultList().get(0);
+        Query getMostWidelyUsedTagIdByUserId = entityManager.createNativeQuery(GET_MOST_WIDELY_USED_TAG_ID_BY_USER_ID);
+        getMostWidelyUsedTagIdByUserId.setParameter(1, userId);
+        Integer tagId = (Integer) getMostWidelyUsedTagIdByUserId.getResultList().get(0);
+        Tag tag = findEntityById(tagId);
+        transaction.commit();
+        entityManager.close();
 
-    public List<Tag> findTagsById(List<Integer> ids){
-//        Session session = entityManagerFactory.openSession();
-//        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
-//        CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
-//
-//        Root<Tag> root = criteriaQuery.from(Tag.class);
-//
-//        criteriaQuery.select(root).where(root.get("id").in(ids));
-//
-//        Query<Tag> query = session.createQuery(criteriaQuery);
-//
-//        List<Tag> result = query.getResultList();
-//
-//        session.close();
-
-        return null;
+        return tag;
     }
 }

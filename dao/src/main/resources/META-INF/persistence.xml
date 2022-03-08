@@ -7,6 +7,8 @@
 
         <class>com.epam.esm.dao.model.giftcertificate.GiftCertificate</class>
         <class>com.epam.esm.dao.model.tag.Tag</class>
+        <class>com.epam.esm.dao.model.user.User</class>
+        <class>com.epam.esm.dao.model.order.Order</class>
 
         <properties>
             <property name="hibernate.dialect" value="org.hibernate.dialect.PostgresPlusDialect"/>

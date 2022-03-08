@@ -5,22 +5,22 @@ import com.epam.esm.service.dto.tag.TagDto;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.impl.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.RequestContext;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Objects;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 @RestController
 @RequestMapping("/tags")
 public class TagController {
@@ -32,13 +32,34 @@ public class TagController {
     private ExceptionHandlerSupport exceptionHandlerSupport;
 
     @GetMapping()
-    public ResponseEntity<List<TagDto>> getAll() throws ServiceException {
-        return new ResponseEntity<>(service.getAll(), HttpStatus.OK);
+    public CollectionModel<TagDto> getAll(@RequestParam(value = "page", defaultValue = "1") String page) throws ServiceException {
+        int pageNumberInteger;
+
+        try {
+            pageNumberInteger = Integer.parseInt(page);
+        } catch (NumberFormatException e){
+            pageNumberInteger = 1;
+        }
+
+        Link selfLink = linkTo(methodOn(TagController.class).getAll( "1")).withSelfRel();
+
+        return CollectionModel.of(service.getAll(pageNumberInteger), selfLink);
+    }
+
+    @GetMapping("/most-popular")
+    public EntityModel<TagDto> getMostWidelyUsedTagForUserWithHighestCostOfAllOrders() {
+        Link selfLink = linkTo(methodOn(TagController.class).getMostWidelyUsedTagForUserWithHighestCostOfAllOrders()).withSelfRel();
+        return EntityModel.of(service.getMostWidelyUsedTagForUserWithHighestCostOfAllOrders(), selfLink);
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<TagDto> getById(@PathVariable("id") Integer id) throws ServiceException {
-        return new ResponseEntity<>(service.getById(id), HttpStatus.OK);
+    public EntityModel<TagDto> getById(@PathVariable("id") Integer id) throws ServiceException {
+        Link selfLink = linkTo(methodOn(TagController.class).getById(id)).withSelfRel();
+        Link create = linkTo(methodOn(TagController.class).create(null)).withRel("create");
+        Link update = linkTo(methodOn(TagController.class).update(id, null)).withRel("update");
+        Link delete = linkTo(methodOn(TagController.class).delete(id)).withRel("delete");
+        Link root = linkTo(methodOn(TagController.class).getAll("1")).withRel("all");
+        return EntityModel.of(service.getById(id), selfLink, create, update, delete, root);
     }
 
     @DeleteMapping(value = "/{id}")

@@ -41,14 +41,7 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
     @Override
     public GiftCertificateDto create(GiftCertificateDto value) throws ServiceException {
         validator.validate(value, false);
-        GiftCertificate savedGiftCertificate;
-
-        try {
-            savedGiftCertificate = dao.saveEntity(converter.convert(value));
-        } catch (DataAccessException e){
-            logger.error(e);
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
+        GiftCertificate savedGiftCertificate = dao.saveEntity(converter.convert(value));
 
         if (Objects.isNull(savedGiftCertificate)){
             throw new ServiceException(ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
@@ -98,7 +91,6 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
         validator.validateIdNotNullAndPositive(id);
         GiftCertificate result;
 
-
         result = dao.findEntityById(id);
 
         if (Objects.isNull(result)){
@@ -118,21 +110,43 @@ public class GiftCertificateService implements Service<GiftCertificateDto> {
     }
 
     /**
+     * returns list of gift certificates by page number
+     * @param pageNumber number of page
+     * @return list of gift certificates by page number
+     */
+    public List<GiftCertificateDto> getAll(Integer pageNumber) throws ServiceException {
+        List<GiftCertificate> daoResult;
+
+        if (pageNumber < 1){
+            pageNumber = 1;
+        }
+
+        daoResult = dao.findAllEntities(pageNumber);
+
+        return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    /**
      * returns filtered list of gift certificates
-     * @param tagName name of tag to be searched, null if no need to search by tag
+     * @param tagNames names of tag to be searched, empty list if no need to search by tag
      * @param namePart part of name to be filtered, null if no need to filter by name part
      * @param descriptionPart part of description to be filtered, null if no need to filter description part
-     * @param sortByName true for sorting by name, false otherwise
-     * @param sortByDate true for sorting by date, false otherwise
-     * @param ascending true for ascending sort, false if descending. ignored if sortByName and sortByDescription is null. true if null
+     * @param orderByName true for ordering by name, false otherwise
+     * @param orderByDate true for ordering by date, false otherwise
+     * @param ascending true for ascending order, false if descending. ignored if orderByName and orderByDate is null. true if null
+     * @param pageNumber number of page
      * @return list of gift certificates that match parameters
      * @throws ServiceException if database error occurred
      */
-    public List<GiftCertificateDto> getAllWithParameters(String tagName, String namePart, String descriptionPart, Boolean sortByName, Boolean sortByDate, Boolean ascending) throws ServiceException {
+    public List<GiftCertificateDto> getAllWithParameters(List<String> tagNames, String namePart, String descriptionPart, Boolean orderByName, Boolean orderByDate, Boolean ascending, Integer pageNumber) throws ServiceException {
         List<GiftCertificate> daoResult;
 
+        if (pageNumber < 1) {
+            pageNumber = 1;
+        }
+
         try {
-            daoResult = dao.findGiftCertificatesWithParameters(tagName, namePart, descriptionPart, sortByName, sortByDate, ascending);
+            daoResult = dao.findGiftCertificatesWithParameters(tagNames, namePart, descriptionPart, orderByName, orderByDate, ascending, pageNumber);
         } catch (DataAccessException e){
             logger.error(e);
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);

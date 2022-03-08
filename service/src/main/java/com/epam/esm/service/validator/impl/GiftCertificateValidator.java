@@ -169,10 +169,9 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         }
 
         tags.forEach(tagDto -> {
-            try {
-                tagValidator.validate(tagDto, false);
-            } catch (ServiceException e){
-                exceptionMessages.addAll(e.getExceptionMessages());
+            if (Objects.isNull(tagDto.getId())
+                    && Objects.isNull(tagDto.getName())){
+                exceptionMessages.add(ExceptionMessage.TAG_ID_AND_NAME_CANNOT_BE_NULL_SIMULTANEOUSLY);
             }
         });
     }
