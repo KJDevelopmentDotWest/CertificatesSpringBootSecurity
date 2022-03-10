@@ -4,13 +4,13 @@ import com.epam.esm.dao.model.EntityModel;
 import lombok.*;
 
 import javax.persistence.*;
-import java.util.Objects;
 
 @Getter
 @Setter
 @ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 @Entity
 @Table(name = "user_table")
 public class User implements EntityModel {
@@ -19,16 +19,4 @@ public class User implements EntityModel {
     @GeneratedValue(generator = "idSequenceUser")
     private Integer id;
     private String name;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        User that = (User) o;
-        return id != null && Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
 }

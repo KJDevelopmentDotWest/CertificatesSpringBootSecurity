@@ -7,7 +7,6 @@ import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Model class that represents GiftCertificate
@@ -16,6 +15,7 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
+@EqualsAndHashCode
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -46,16 +46,4 @@ public class GiftCertificate implements EntityModel {
             joinColumns = {@JoinColumn(name = "gift_certificate_id", referencedColumnName="id")},
             inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName="id")})
     private List<Tag> tags;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        GiftCertificate that = (GiftCertificate) o;
-        return id != null && Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
 }

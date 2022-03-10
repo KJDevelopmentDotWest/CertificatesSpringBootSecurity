@@ -15,6 +15,7 @@ import java.util.Objects;
 @ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 @Entity
 public class Tag implements EntityModel {
     @Id
@@ -22,16 +23,4 @@ public class Tag implements EntityModel {
     @GeneratedValue(generator = "idSequenceTag")
     private Integer id;
     private String name;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        Tag tag = (Tag) o;
-        return id != null && Objects.equals(id, tag.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
 }

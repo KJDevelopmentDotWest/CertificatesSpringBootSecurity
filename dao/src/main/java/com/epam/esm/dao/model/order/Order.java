@@ -14,6 +14,7 @@ import java.util.Objects;
 @ToString
 @RequiredArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 @Entity
 @Table(name = "order_table")
 public class Order implements EntityModel {
@@ -34,17 +35,4 @@ public class Order implements EntityModel {
     private LocalDateTime time;
 
     private Double cost;
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        Order that = (Order) o;
-        return id != null && Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
 }
