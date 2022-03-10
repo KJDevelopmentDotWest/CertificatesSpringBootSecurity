@@ -93,7 +93,7 @@ public class SqlGenerator {
                 sqlFindWithParametersString.append(whereStringLikeColumnNames.get(i)).append(WHITE_SPACE_SYMBOL).append(SQL_LIKE)
                         .append(QUESTION_SYMBOL).append(WHITE_SPACE_SYMBOL);
                 if (i < whereStringLikeColumnNames.size() - 1){
-                    sqlFindWithParametersString.append(SQL_AND);
+                    sqlFindWithParametersString.append(SQL_OR);
                 }
             }
         }

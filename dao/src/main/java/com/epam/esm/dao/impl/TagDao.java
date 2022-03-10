@@ -1,32 +1,27 @@
 package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
-import com.epam.esm.dao.hibernate.JpaUtil;
-import com.epam.esm.dao.model.order.Order;
 import com.epam.esm.dao.model.tag.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Repository;
 
 import javax.persistence.*;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Dao interface implementation for Tag with ability to perform CRUD operations
  */
 
-@Component
+@Repository
 public class TagDao implements Dao<Tag> {
 
-    @Autowired
-    JdbcTemplate jdbcTemplate;
+    @PersistenceUnit
+    private EntityManagerFactory entityManagerFactory;
 
-    private final EntityManagerFactory entityManagerFactory = JpaUtil.getEntityManagerFactory();
+    @PersistenceContext(type = PersistenceContextType.EXTENDED)
+    private EntityManager entityManager;
 
     private static final String GET_USER_ID_WITH_HIGHEST_COST_OF_ALL_ORDERS = "SELECT subselect.user_id FROM (" +
             "SELECT user_id, sum(cost) as cost_sum FROM public.order_table GROUP BY user_id" +
@@ -38,20 +33,15 @@ public class TagDao implements Dao<Tag> {
             "JOIN gift_certificate_to_tag ON gift_certificate.id = gift_certificate_to_tag.gift_certificate_id " +
             "WHERE order_table.user_id = ? GROUP BY gift_certificate_to_tag.tag_id ORDER BY count(gift_certificate_to_tag.tag_id) DESC LIMIT 1";
 
-    private static final Integer MAX_ITEMS_IN_PAGE = 5;
-
     @Override
-    @Transactional
     public Tag saveEntity(Tag entity) {
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
         entity.setId(null);
         EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
         entityManager.persist(entity);
         entityManager.flush();
         transaction.commit();
-        entityManager.close();
-        return findEntityById(entity.getId());
+        return entity;
     }
 
     @Override
@@ -60,55 +50,48 @@ public class TagDao implements Dao<Tag> {
     }
 
     @Override
-    @Transactional
     public Boolean deleteEntity(Integer id) {
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
         EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
-        entityManager.remove(findEntityById(id));
+        Tag entity = findEntityById(id);
+        Query query = entityManager.createNativeQuery("DELETE FROM gift_certificate_to_tag WHERE tag_id = ?");
+        query.setParameter(1, entity.getId());
+        query.executeUpdate();
+        entity = entityManager.merge(entity);
+        entityManager.remove(entity);
         entityManager.flush();
         transaction.commit();
-        entityManager.close();
         return true;
     }
 
     @Override
     public List<Tag> findAllEntities() {
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
         CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
         CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
         criteriaQuery.from(Tag.class);
         TypedQuery<Tag> query = entityManager.createQuery(criteriaQuery);
         List<Tag> result = query.getResultList();
-        entityManager.close();
         return result;
     }
 
     @Override
     public Tag findEntityById(Integer id) {
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
         Tag result = entityManager.find(Tag.class, id);
-        entityManager.close();
         return result;
     }
 
     /**
      * returns list of tags by page number
      * @param pageNumber number of page
+     * @param pageSize size of page
      * @return list of gift certificates by page number
      */
-    public List<Tag> findAllEntities(Integer pageNumber) {
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
+    public List<Tag> findAllEntities(Integer pageNumber, Integer pageSize) {
         CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
         CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
         criteriaQuery.from(Tag.class);
-        TypedQuery<Tag> query = entityManager.createQuery(criteriaQuery).setFirstResult((pageNumber -1) * MAX_ITEMS_IN_PAGE).setMaxResults(MAX_ITEMS_IN_PAGE);
+        TypedQuery<Tag> query = entityManager.createQuery(criteriaQuery).setFirstResult((pageNumber -1) * pageSize).setMaxResults(pageSize);
         List<Tag> result = query.getResultList();
-        if (result.isEmpty() && pageNumber > 1){
-            entityManager.close();
-            findAllEntities(1);
-        }
-        entityManager.close();
         return result;
     }
 
@@ -118,15 +101,12 @@ public class TagDao implements Dao<Tag> {
      * @return tag with provided name, null if there is no such tag
      */
     public Tag findTagByName(String name){
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
         CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
         CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
         Root<Tag> root = criteriaQuery.from(Tag.class);
         criteriaQuery.select(root).where(criteriaBuilder.like(root.get("name"), name));
         TypedQuery<Tag> query = entityManager.createQuery(criteriaQuery);
-        List<Tag> result = query.getResultList();
-        entityManager.close();
-        return result.stream().findFirst().orElse(null);
+        return query.getResultList().stream().findFirst().orElse(null);
     }
 
     /**
@@ -134,7 +114,6 @@ public class TagDao implements Dao<Tag> {
      * @return most widely used tag for user with the highest cost of all orders
      */
     public Tag findMostWidelyUsedTagForUserWithHighestCostOfAllOrders() {
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
         EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
 
@@ -145,8 +124,6 @@ public class TagDao implements Dao<Tag> {
         Integer tagId = (Integer) getMostWidelyUsedTagIdByUserId.getResultList().get(0);
         Tag tag = findEntityById(tagId);
         transaction.commit();
-        entityManager.close();
-
         return tag;
     }
 }

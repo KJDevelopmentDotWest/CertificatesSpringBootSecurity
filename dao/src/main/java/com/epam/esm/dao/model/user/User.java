@@ -1,7 +1,6 @@
 package com.epam.esm.dao.model.user;
 
 import com.epam.esm.dao.model.EntityModel;
-import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import lombok.*;
 
 import javax.persistence.*;
@@ -17,7 +16,7 @@ import java.util.Objects;
 public class User implements EntityModel {
     @Id
     @SequenceGenerator(name = "idSequenceUser", sequenceName = "user_table_id_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "idSequenceUser")
+    @GeneratedValue(generator = "idSequenceUser")
     private Integer id;
     private String name;
 

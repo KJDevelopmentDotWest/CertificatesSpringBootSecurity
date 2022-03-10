@@ -9,9 +9,9 @@ import com.epam.esm.service.validator.api.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Validator implementation for GiftCertificateDto
@@ -25,10 +25,7 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
     private static final String WHITESPACE = " ";
 
-    private final List<ExceptionMessage> exceptionMessages = new ArrayList<>();
-
-    @Autowired
-    private TagValidator tagValidator;
+    private final List<ExceptionMessage> exceptionMessages = new CopyOnWriteArrayList<>();
 
     @Override
     public void validate(GiftCertificateDto value, Boolean checkId) throws ServiceException {

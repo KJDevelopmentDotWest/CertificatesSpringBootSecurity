@@ -24,7 +24,7 @@ public class GiftCertificate implements EntityModel {
 
     @Id
     @SequenceGenerator(name = "idSequenceGiftCertificate", sequenceName = "gift_certificate_id_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "idSequenceGiftCertificate")
+    @GeneratedValue(generator = "idSequenceGiftCertificate")
     private Integer id;
 
     private String name;
@@ -41,7 +41,7 @@ public class GiftCertificate implements EntityModel {
     @Column(name = "last_update_date")
     private LocalDateTime lastUpdateDate;
 
-    @ManyToMany(targetEntity = Tag.class, fetch = FetchType.EAGER)
+    @ManyToMany(targetEntity = Tag.class)
     @JoinTable(name = "gift_certificate_to_tag",
             joinColumns = {@JoinColumn(name = "gift_certificate_id", referencedColumnName="id")},
             inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName="id")})

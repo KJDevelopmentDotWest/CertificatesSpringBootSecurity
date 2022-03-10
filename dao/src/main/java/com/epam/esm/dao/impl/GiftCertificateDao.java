@@ -1,14 +1,13 @@
 package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
-import com.epam.esm.dao.hibernate.JpaUtil;
 import com.epam.esm.dao.model.tag.Tag;
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import com.epam.esm.dao.sqlgenerator.SqlGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
@@ -23,50 +22,38 @@ import java.util.stream.Collectors;
  * Dao interface implementation for GiftCertificate with ability to perform CRUD operations
  */
 
-@Component
+@Repository
 public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     @Autowired
     private TagDao tagDao;
 
-    private final EntityManagerFactory entityManagerFactory = JpaUtil.getEntityManagerFactory();
+    @PersistenceUnit
+    private EntityManagerFactory entityManagerFactory;
+
+    @PersistenceContext(type = PersistenceContextType.EXTENDED)
+    private EntityManager entityManager;
 
     private static final Logger logger = LogManager.getLogger(GiftCertificateDao.class);
-
-    private static final Integer MAX_ITEMS_IN_PAGE = 5;
 
     @Override
     @Transactional
     public GiftCertificate saveEntity(GiftCertificate entity) {
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-
         entity.setId(null);
         entity.setCreateDate(LocalDateTime.now());
         entity.setLastUpdateDate(LocalDateTime.now());
-
         addTagsIfNotExists(entity.getTags());
-
-        EntityTransaction transaction = entityManager.getTransaction();
-        transaction.begin();
         entityManager.persist(entity);
         entityManager.flush();
-        transaction.commit();
-        entityManager.close();
-
         return findEntityById(entity.getId());
     }
 
     @Override
     @Transactional
     public GiftCertificate updateEntity(GiftCertificate entity) {
-
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-
-        addTagsIfNotExists(entity.getTags());
-
-        EntityTransaction transaction = entityManager.getTransaction();
-        transaction.begin();
-
+        if (Objects.nonNull(entity.getTags())){
+            addTagsIfNotExists(entity.getTags());
+        }
         GiftCertificate oldGiftCertificate = findEntityById(entity.getId());
 
         if (Objects.isNull(oldGiftCertificate)){
@@ -98,27 +85,23 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
         entityManager.merge(entity);
         entityManager.flush();
-        transaction.commit();
-        entityManager.close();
-
-        return findEntityById(entity.getId());
+        return entity;
     }
 
     @Override
+    @Transactional
     public Boolean deleteEntity(Integer id) {
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-        EntityTransaction transaction = entityManager.getTransaction();
-        transaction.begin();
         GiftCertificate entity = findEntityById(id);
 
         if (Objects.nonNull(entity)){
+            Query query = entityManager.createNativeQuery("DELETE FROM order_table WHERE gift_certificate_id = ?");
+            query.setParameter(1, entity.getId());
+            query.executeUpdate();
             entity = entityManager.merge(entity);
             entityManager.remove(entity);
         }
 
         entityManager.flush();
-        transaction.commit();
-        entityManager.close();
         return Objects.nonNull(entity);
     }
 
@@ -133,64 +116,47 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
         TypedQuery<GiftCertificate> query = entityManager.createQuery(criteriaQuery);
 
-        List<GiftCertificate> result = query.getResultList();
-
-        entityManager.close();
-
-        return result;
+        return query.getResultList();
     }
 
     @Override
     public GiftCertificate findEntityById(Integer id) {
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-        GiftCertificate result = entityManager.find(GiftCertificate.class, id);
-        entityManager.close();
-        return result;
+        return entityManager.find(GiftCertificate.class, id);
     }
 
     /**
      * returns list of gift certificates by page number
      * @param pageNumber number of page
+     * @param pageSize size of page
      * @return list of gift certificates by page number
      */
-    public List<GiftCertificate> findAllEntities(Integer pageNumber) {
-
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
+    public List<GiftCertificate> findAllEntities(Integer pageNumber, Integer pageSize) {
         CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
         CriteriaQuery<GiftCertificate> criteriaQuery = criteriaBuilder.createQuery(GiftCertificate.class);
 
         criteriaQuery.from(GiftCertificate.class);
 
-        TypedQuery<GiftCertificate> query = entityManager.createQuery(criteriaQuery).setFirstResult((pageNumber -1) * MAX_ITEMS_IN_PAGE).setMaxResults(MAX_ITEMS_IN_PAGE);
+        TypedQuery<GiftCertificate> query = entityManager.createQuery(criteriaQuery)
+                .setFirstResult((pageNumber -1) * pageSize).setMaxResults(pageSize);
 
-        List<GiftCertificate> result = query.getResultList();
-
-        if (result.isEmpty() && pageNumber > 1){
-            entityManager.close();
-            findAllEntities(1);
-        }
-
-        entityManager.close();
-        return result;
+        return query.getResultList();
     }
 
     /**
      * returns filtered list of gift certificates
      * @param tagNames names of tag to be searched, empty list if no need to search by tag
-     * @param namePart part of name to be filtered, null if no need to filter by name part
-     * @param descriptionPart part of description to be filtered, null if no need to filter description part
+     * @param searchPart part of name or  to be filtered, null if no need to filter by name part
      * @param orderByName true for ordering by name, false otherwise
      * @param orderByDate true for ordering by date, false otherwise
      * @param ascending true for ascending order, false if descending. ignored if orderByName and orderByDate is null. true if null
-     * @param pageNumber page number
+     * @param pageNumber number of page
+     * @param pageSize size of page
      * @throws org.springframework.dao.DataAccessException if database error occurred
      * @return list of gift certificates that match parameters
      */
-    public List<GiftCertificate> findGiftCertificatesWithParameters (List<String> tagNames, String namePart, String descriptionPart, Boolean orderByName,
-                                                                     Boolean orderByDate, Boolean ascending, Integer pageNumber){
-        //todo this method not working as expected
+    public List<GiftCertificate> findGiftCertificatesWithParameters (List<String> tagNames, String searchPart, Boolean orderByName,
+                                                                     Boolean orderByDate, Boolean ascending, Integer pageNumber, Integer pageSize){
         List<GiftCertificate> result;
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
 
         if (tagNames.isEmpty()){
             CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
@@ -199,12 +165,12 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
             List<Predicate> predicates = new ArrayList<>();
             List<javax.persistence.criteria.Order> orders = new ArrayList<>();
 
-            if (Objects.nonNull(namePart)){
-                predicates.add(criteriaBuilder.like(root.get("name"), "%" + namePart + "%"));
+            if (Objects.nonNull(searchPart)){
+                predicates.add(criteriaBuilder.or(
+                        criteriaBuilder.like(root.get("name"), "%" + searchPart + "%"),
+                        criteriaBuilder.like(root.get("description"), "%" + searchPart + "%")));
             }
-            if (Objects.nonNull(descriptionPart)){
-                predicates.add(criteriaBuilder.like(root.get("description"), "%" + descriptionPart + "%"));
-            }
+
             if (orderByName) {
                 if (Objects.isNull(ascending) || ascending){
                     orders.add(criteriaBuilder.asc(root.get("name")));
@@ -227,19 +193,17 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
                 criteriaQuery.orderBy(orders);
             }
 
-            TypedQuery<GiftCertificate> query = entityManager.createQuery(criteriaQuery).setFirstResult((pageNumber -1) * MAX_ITEMS_IN_PAGE).setMaxResults(MAX_ITEMS_IN_PAGE);
+            TypedQuery<GiftCertificate> query = entityManager.createQuery(criteriaQuery).setFirstResult((pageNumber -1) * pageSize).setMaxResults(pageSize);
 
             result = query.getResultList();
         } else {
             List<Object> objectsToAdd = tagNames.stream().map(tagName -> "%," + tagName + ",%").collect(Collectors.toCollection(ArrayList::new));
             List<String> whereStringLikeColumnNames = new ArrayList<>();
-            if (Objects.nonNull(namePart)){
+            if (Objects.nonNull(searchPart)){
                 whereStringLikeColumnNames.add("name");
-                objectsToAdd.add(namePart);
-            }
-            if (Objects.nonNull(descriptionPart)){
+                objectsToAdd.add(searchPart);
                 whereStringLikeColumnNames.add("description");
-                objectsToAdd.add(descriptionPart);
+                objectsToAdd.add(searchPart);
             }
 
             List<String> orderByColumnNames = new ArrayList<>();
@@ -250,8 +214,8 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
                 orderByColumnNames.add("last_update_date");
             }
 
-            objectsToAdd.add(MAX_ITEMS_IN_PAGE);
-            objectsToAdd.add((pageNumber -1) * MAX_ITEMS_IN_PAGE);
+            objectsToAdd.add(pageSize);
+            objectsToAdd.add((pageNumber -1) * pageSize);
 
             Query query = entityManager.createNativeQuery(SqlGenerator.generateSQLForGiftCertificateFindWithParameters(tagNames.size(), whereStringLikeColumnNames, orderByColumnNames, ascending));
 
@@ -262,14 +226,6 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
             List<Object> ids = query.getResultList();
             result = ids.stream().map(obj -> findEntityById((Integer) obj)).collect(Collectors.toCollection(ArrayList::new));
         }
-
-        if (result.isEmpty() && pageNumber > 1){
-            entityManager.close();
-            return findGiftCertificatesWithParameters(tagNames, namePart, descriptionPart, orderByName,
-                    orderByDate, ascending, 1);
-        }
-
-        entityManager.close();
         return result;
     }
 

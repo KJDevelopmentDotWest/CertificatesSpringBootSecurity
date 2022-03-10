@@ -17,7 +17,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
-public class UserService implements Service<UserDto> {
+public class UserService extends Service<UserDto> {
 
     @Autowired
     private UserDao dao;
@@ -56,9 +56,7 @@ public class UserService implements Service<UserDto> {
     @Override
     public List<UserDto> getAll() throws ServiceException {
         List<User> daoResult;
-
         daoResult = dao.findAllEntities();
-
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
     }
 
@@ -67,15 +65,9 @@ public class UserService implements Service<UserDto> {
      * @param pageNumber number of page
      * @return list of gift certificates by page number
      */
-    public List<UserDto> getAll(Integer pageNumber) throws ServiceException {
+    public List<UserDto> getAll(String pageNumber, String pageSize) throws ServiceException {
         List<User> daoResult;
-
-        if (pageNumber < 1) {
-            pageNumber = 1;
-        }
-
-        daoResult = dao.findAllEntities(pageNumber);
-
+        daoResult = dao.findAllEntities(parsePageNumber(pageNumber), parsePageSize(pageSize));
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
     }
 }

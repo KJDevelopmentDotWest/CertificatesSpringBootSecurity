@@ -1,7 +1,6 @@
 package com.epam.esm.service.impl;
 
 import com.epam.esm.dao.impl.OrderDao;
-import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import com.epam.esm.dao.model.order.Order;
 import com.epam.esm.service.api.Service;
 import com.epam.esm.service.converter.impl.OrderConverter;
@@ -13,7 +12,6 @@ import com.epam.esm.service.validator.impl.OrderValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,7 +19,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
-public class OrderService implements Service<OrderDto> {
+public class OrderService extends Service<OrderDto> {
 
     @Autowired
     private OrderDao dao;
@@ -59,11 +57,31 @@ public class OrderService implements Service<OrderDto> {
     @Override
     public OrderDto getById(Integer id) throws ServiceException {
         Order result;
-
         result = dao.findEntityById(id);
 
         if (Objects.isNull(result)){
-            throw new ServiceException(ExceptionCode.ENTITY_NOT_FOUND, ExceptionMessage.THERE_IS_NO_GIFT_CERTIFICATE_WITH_PROVIDED_ID);
+            throw new ServiceException(ExceptionCode.ENTITY_NOT_FOUND, ExceptionMessage.THERE_IS_NO_ORDER_WITH_PROVIDED_ID);
+        }
+
+        return converter.convert(result);
+    }
+
+    /**
+     * validates id and sends get by id request to corresponding dao class
+     * @param id order id
+     * @param userId user id
+     * @return order with id == value.id
+     * @throws ServiceException if there is no value with provided id, id is null, database error occurred, or order not belongs to user
+     */
+    public OrderDto getById(Integer id, Integer userId) throws ServiceException {
+        Order result = dao.findEntityById(id);
+
+        if (Objects.isNull(result)){
+            throw new ServiceException(ExceptionCode.ENTITY_NOT_FOUND, ExceptionMessage.THERE_IS_NO_ORDER_WITH_PROVIDED_ID);
+        }
+
+        if (!Objects.equals(result.getUser().getId(), userId)){
+            throw new ServiceException(ExceptionCode.ENTITY_NOT_FOUND, ExceptionMessage.THERE_IS_NO_ORDER_WITH_PROVIDED_ID_THAT_BELONG_TO_THIS_USER);
         }
 
         return converter.convert(result);
@@ -80,13 +98,8 @@ public class OrderService implements Service<OrderDto> {
      * @param pageNumber number of page
      * @return list of orders by user id and page number
      */
-    public List<OrderDto> getByUserId(Integer id, Integer pageNumber) {
-        if (pageNumber < 1){
-            pageNumber = 1;
-        }
-
-        List<Order> daoResult = dao.findOrdersByUserId(id, pageNumber);
-
+    public List<OrderDto> getByUserId(Integer id, String pageNumber, String pageSize) {
+        List<Order> daoResult = dao.findOrdersByUserId(id, parsePageNumber(pageNumber), parsePageSize(pageSize));
         return daoResult.stream().map(converter::convert).collect(Collectors.toList());
     }
 }

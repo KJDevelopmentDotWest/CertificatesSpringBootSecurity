@@ -9,14 +9,14 @@ import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.validator.api.Validator;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Component
 public class OrderValidator implements Validator<OrderDto> {
 
-    private final List<ExceptionMessage> exceptionMessages = new ArrayList<>();
+    private final List<ExceptionMessage> exceptionMessages = new CopyOnWriteArrayList<>();
 
     @Override
     public void validate(OrderDto value, Boolean checkId) throws ServiceException {

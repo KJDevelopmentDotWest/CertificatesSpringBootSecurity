@@ -11,14 +11,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.RequestContext;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.Objects;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -34,42 +41,33 @@ public class OrderController {
     private ExceptionHandlerSupport exceptionHandlerSupport;
 
     @GetMapping(value = "/{id}")
-    public EntityModel<OrderDto> getById(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) throws ServiceException {
-        OrderDto orderDto = service.getById(id);
-
-        //im not sure if a have to implement this
-        if (!Objects.equals(orderDto.getUser().getId(), userId)){
-            throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.ACCESS_DENIED);
-        }
+    public ResponseEntity<EntityModel<OrderDto>> getById(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) throws ServiceException {
+        OrderDto orderDto = service.getById(id, userId);
 
         Link selfLink = linkTo(methodOn(OrderController.class).getById(id, userId)).withSelfRel();
-        Link create = linkTo(methodOn(OrderController.class).create(userId,null)).withRel("create");
-        Link getByUserId = linkTo(methodOn(OrderController.class).getByUserId(userId, "1")).withRel("get_by_user_id");
+        Link getByUserId = linkTo(methodOn(OrderController.class).getByUserId(userId, "1", "10")).withRel("get_by_user_id");
 
-        return EntityModel.of(orderDto, selfLink, create, getByUserId);
+        return new ResponseEntity<>(EntityModel.of(orderDto, selfLink, getByUserId), HttpStatus.OK);
     }
 
     @GetMapping()
-    public CollectionModel<OrderDto> getByUserId(@PathVariable("userId") Integer userId, @RequestParam(value = "page", defaultValue = "1") String page) throws ServiceException {
-        int pageNumberInteger;
-
-        try {
-            pageNumberInteger = Integer.parseInt(page);
-        } catch (NumberFormatException e){
-            pageNumberInteger = 1;
-        }
-
-        Link selfLink = linkTo(methodOn(OrderController.class).getByUserId(userId, "1")).withSelfRel();
-        Link create = linkTo(methodOn(OrderController.class).create(userId,null)).withRel("create");
-
-        List<OrderDto> orderDto = service.getByUserId(userId, pageNumberInteger);
-        return CollectionModel.of(orderDto, selfLink, create);
+    public ResponseEntity<CollectionModel<OrderDto>> getByUserId(@PathVariable("userId") Integer userId,
+                                                 @RequestParam(value = "page", defaultValue = "1") String page,
+                                                 @RequestParam(value = "pageSize", defaultValue = "10") String pageSize) throws ServiceException {
+        Link selfLink = linkTo(methodOn(OrderController.class).getByUserId(userId, "1", pageSize)).withSelfRel();
+        List<OrderDto> orderDto = service.getByUserId(userId, page, pageSize);
+        return new ResponseEntity<>(CollectionModel.of(orderDto, selfLink), HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<OrderDto> create(@PathVariable("userId") Integer userId, @RequestBody OrderDto order) throws ServiceException {
+    public ResponseEntity<EntityModel<OrderDto>> create(@PathVariable("userId") Integer userId, @RequestBody OrderDto order) throws ServiceException {
         order.setUser(new UserDto(userId, null));
-        return new ResponseEntity<>(service.create(order), HttpStatus.CREATED);
+        OrderDto createdDto = service.create(order);
+        HttpHeaders headers = new HttpHeaders();
+        Link getById = linkTo(methodOn(OrderController.class).getById(createdDto.getId(), userId)).withSelfRel();
+        Link getByUserId = linkTo(methodOn(OrderController.class).getByUserId(userId, "1", "10")).withRel("get_by_user_id");
+        headers.add("Location", createdDto.getId().toString());
+        return new ResponseEntity<>(EntityModel.of(createdDto, getById, getByUserId), headers, HttpStatus.CREATED);
     }
 
     @ExceptionHandler({Exception.class})

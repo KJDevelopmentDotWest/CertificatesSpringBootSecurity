@@ -1,11 +1,9 @@
 package com.epam.esm.dao.model.tag;
 
 import com.epam.esm.dao.model.EntityModel;
-import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import lombok.*;
 
 import javax.persistence.*;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -21,7 +19,7 @@ import java.util.Objects;
 public class Tag implements EntityModel {
     @Id
     @SequenceGenerator(name = "idSequenceTag", sequenceName = "tag_id_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "idSequenceTag")
+    @GeneratedValue(generator = "idSequenceTag")
     private Integer id;
     private String name;
 

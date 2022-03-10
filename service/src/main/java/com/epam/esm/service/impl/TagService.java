@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  */
 
 @Component
-public class TagService implements Service<TagDto> {
+public class TagService extends Service<TagDto> {
 
     @Autowired
     private TagDao dao;
@@ -73,31 +73,14 @@ public class TagService implements Service<TagDto> {
     @Override
     public Boolean delete(Integer id) throws ServiceException {
         validator.validateIdNotNullAndPositive(id);
-
-        Boolean result;
-
-        try {
-            result = dao.deleteEntity(id);
-        } catch (DataAccessException e){
-            logger.error(e);
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
-
-        return result;
+        return dao.deleteEntity(id);
     }
 
     @Override
     public TagDto getById(Integer id) throws ServiceException {
         validator.validateIdNotNullAndPositive(id);
 
-        Tag daoResult;
-
-        try {
-            daoResult = dao.findEntityById(id);
-        } catch (DataAccessException e){
-            logger.error(e);
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
+        Tag daoResult = dao.findEntityById(id);
 
         if (Objects.isNull(daoResult)){
             throw new ServiceException(ExceptionCode.ENTITY_NOT_FOUND, ExceptionMessage.THERE_IS_NO_TAG_WITH_PROVIDED_ID);
@@ -124,19 +107,9 @@ public class TagService implements Service<TagDto> {
      * @param pageNumber number of page
      * @return list of gift certificates by page number
      */
-    public List<TagDto> getAll(Integer pageNumber) throws ServiceException {
+    public List<TagDto> getAll(String pageNumber, String pageSize) throws ServiceException {
         List<Tag> daoResult;
-
-        if (pageNumber < 1){
-            pageNumber = 1;
-        }
-
-        try {
-            daoResult = dao.findAllEntities(pageNumber);
-        } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
-
+        daoResult = dao.findAllEntities(parsePageNumber(pageNumber), parsePageSize(pageSize));
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
     }
 
