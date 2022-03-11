@@ -6,18 +6,20 @@ import com.epam.esm.service.exception.ExceptionCode;
 import com.epam.esm.service.exception.ExceptionMessage;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.validator.api.Validator;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Validator implementation for GiftCertificateDto
  */
 
 @Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
     private static final Integer NAME_MIN_LENGTH = 2;
@@ -25,7 +27,7 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
     private static final String WHITESPACE = " ";
 
-    private final List<ExceptionMessage> exceptionMessages = new CopyOnWriteArrayList<>();
+    private final List<ExceptionMessage> exceptionMessages = new ArrayList<>();
 
     @Override
     public void validate(GiftCertificateDto value, Boolean checkId) throws ServiceException {

@@ -5,17 +5,20 @@ import com.epam.esm.service.exception.ExceptionCode;
 import com.epam.esm.service.exception.ExceptionMessage;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.validator.api.Validator;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Validator implementation for TagDto
  */
 
 @Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class TagValidator implements Validator<TagDto> {
 
     private static final Integer NAME_MIN_LENGTH = 1;
@@ -23,7 +26,7 @@ public class TagValidator implements Validator<TagDto> {
 
     private static final String WHITESPACE = " ";
 
-    private final List<ExceptionMessage> exceptionMessages = new CopyOnWriteArrayList<>();
+    private final List<ExceptionMessage> exceptionMessages = new ArrayList<>();
 
     @Override
     public void validate(TagDto value, Boolean checkId) throws ServiceException {
