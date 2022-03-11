@@ -7,23 +7,23 @@ import com.epam.esm.service.exception.ExceptionCode;
 import com.epam.esm.service.exception.ExceptionMessage;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.validator.api.Validator;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-public class OrderValidator implements Validator<OrderDto> {
+/**
+ * Validator implementation for OrderDto
+ */
 
-    private final List<ExceptionMessage> exceptionMessages = new ArrayList<>();
+@Component
+public class OrderValidator implements Validator<OrderDto> {
+    private List<ExceptionMessage> exceptionMessages;
 
     @Override
     public void validate(OrderDto value, Boolean checkId) throws ServiceException {
-        exceptionMessages.clear();
+        exceptionMessages = new  ArrayList<>();
 
         if (Objects.isNull(value)){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.ORDER_CANNOT_BE_NULL);

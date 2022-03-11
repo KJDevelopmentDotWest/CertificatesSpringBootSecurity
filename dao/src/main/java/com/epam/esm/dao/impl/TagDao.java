@@ -20,7 +20,7 @@ public class TagDao implements Dao<Tag> {
     @PersistenceUnit
     private EntityManagerFactory entityManagerFactory;
 
-    @PersistenceContext(type = PersistenceContextType.EXTENDED)
+    @PersistenceContext
     private EntityManager entityManager;
 
     private static final String GET_USER_ID_WITH_HIGHEST_COST_OF_ALL_ORDERS = "SELECT subselect.user_id FROM (" +

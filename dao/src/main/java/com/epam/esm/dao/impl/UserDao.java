@@ -15,7 +15,7 @@ public class UserDao implements Dao<User> {
     @PersistenceUnit
     private EntityManagerFactory entityManagerFactory;
 
-    @PersistenceContext(type = PersistenceContextType.EXTENDED)
+    @PersistenceContext
     private EntityManager entityManager;
 
     @Override

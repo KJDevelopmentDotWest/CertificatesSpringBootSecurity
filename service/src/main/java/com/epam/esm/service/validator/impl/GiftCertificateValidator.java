@@ -6,8 +6,6 @@ import com.epam.esm.service.exception.ExceptionCode;
 import com.epam.esm.service.exception.ExceptionMessage;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.validator.api.Validator;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -19,7 +17,6 @@ import java.util.Objects;
  */
 
 @Component
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
     private static final Integer NAME_MIN_LENGTH = 2;
@@ -27,11 +24,11 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
     private static final String WHITESPACE = " ";
 
-    private final List<ExceptionMessage> exceptionMessages = new ArrayList<>();
+    private List<ExceptionMessage> exceptionMessages;
 
     @Override
     public void validate(GiftCertificateDto value, Boolean checkId) throws ServiceException {
-        exceptionMessages.clear();
+        exceptionMessages = new  ArrayList<>();
 
         if (Objects.isNull(value)){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.GIFT_CERTIFICATE_CANNOT_BE_NULL);
