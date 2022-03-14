@@ -1,6 +1,6 @@
 package com.epam.esm.dao.api;
 
-import com.epam.esm.dao.model.Entity;
+import com.epam.esm.dao.model.EntityModel;
 
 import java.util.List;
 
@@ -8,7 +8,7 @@ import java.util.List;
  * Interface for data access object classes
  * @param <T> type of entity this dao will operate
  */
-public interface Dao<T extends Entity> {
+public interface Dao<T extends EntityModel> {
 
     /**
      * saves entity and returns saved entity with id

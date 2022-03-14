@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  */
 
 @Component
-public class TagService implements Service<TagDto> {
+public class TagService extends Service<TagDto> {
 
     @Autowired
     private TagDao dao;
@@ -52,13 +52,7 @@ public class TagService implements Service<TagDto> {
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.TAG_NAME_MUST_BE_UNIQUE);
         }
 
-        Tag savedTag;
-        try {
-            savedTag = dao.saveEntity(converter.convert(value));
-        } catch (DataAccessException e){
-            logger.error(e);
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
+        Tag savedTag = dao.saveEntity(converter.convert(value));
 
         if (Objects.isNull(savedTag)){
             throw new ServiceException(ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
@@ -79,31 +73,14 @@ public class TagService implements Service<TagDto> {
     @Override
     public Boolean delete(Integer id) throws ServiceException {
         validator.validateIdNotNullAndPositive(id);
-
-        Boolean result;
-
-        try {
-            result = dao.deleteEntity(id);
-        } catch (DataAccessException e){
-            logger.error(e);
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
-
-        return result;
+        return dao.deleteEntity(id);
     }
 
     @Override
     public TagDto getById(Integer id) throws ServiceException {
         validator.validateIdNotNullAndPositive(id);
 
-        Tag daoResult;
-
-        try {
-            daoResult = dao.findEntityById(id);
-        } catch (DataAccessException e){
-            logger.error(e);
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
+        Tag daoResult = dao.findEntityById(id);
 
         if (Objects.isNull(daoResult)){
             throw new ServiceException(ExceptionCode.ENTITY_NOT_FOUND, ExceptionMessage.THERE_IS_NO_TAG_WITH_PROVIDED_ID);
@@ -122,6 +99,17 @@ public class TagService implements Service<TagDto> {
             throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 
+        return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    /**
+     * returns list of tags by page number
+     * @param pageNumber number of page
+     * @return list of gift certificates by page number
+     */
+    public List<TagDto> getAll(String pageNumber, String pageSize) throws ServiceException {
+        List<Tag> daoResult;
+        daoResult = dao.findAllEntities(parsePageNumber(pageNumber), parsePageSize(pageSize));
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
     }
 
@@ -150,5 +138,13 @@ public class TagService implements Service<TagDto> {
         }
 
         return converter.convert(daoResult);
+    }
+
+    /**
+     * returns most widely used tag for user with the highest cost of all orders
+     * @return most widely used tag for user with the highest cost of all orders
+     */
+    public TagDto getMostWidelyUsedTagForUserWithHighestCostOfAllOrders(){
+        return converter.convert(dao.findMostWidelyUsedTagForUserWithHighestCostOfAllOrders());
     }
 }

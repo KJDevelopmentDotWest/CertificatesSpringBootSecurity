@@ -1,86 +1,98 @@
 package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
-import com.epam.esm.dao.mapper.TagMapper;
 import com.epam.esm.dao.model.tag.Tag;
-import com.epam.esm.dao.sqlgenerator.SqlGenerator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Repository;
 
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
+import javax.persistence.*;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Dao interface implementation for Tag with ability to perform CRUD operations
  */
 
-@Component
+@Repository
 public class TagDao implements Dao<Tag> {
 
-    @Autowired
-    JdbcTemplate jdbcTemplate;
+    @PersistenceUnit
+    private EntityManagerFactory entityManagerFactory;
 
-    private static final Logger logger = LogManager.getLogger(TagDao.class);
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    private static final String SQL_SAVE_TAG = "INSERT INTO tag (name) VALUES (?)";
+    private static final String GET_USER_ID_WITH_HIGHEST_COST_OF_ALL_ORDERS = "SELECT subselect.user_id FROM (" +
+            "SELECT user_id, sum(cost) as cost_sum FROM public.order_table GROUP BY user_id" +
+            ") as subselect GROUP BY user_id ORDER BY max(cost_sum) DESC LIMIT 1";
 
-    private static final String SQL_UPDATE_TAG_BY_ID = "UPDATE tag SET name = ? WHERE id = ?";
-
-    private static final String SQL_DELETE_TAG_BY_ID = "DELETE FROM tag WHERE id = ?";
-    private static final String SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_TAG_ID = "DELETE FROM gift_certificate_to_tag WHERE tag_id = ?";
-
-    private static final String SQL_FIND_ALL_TAGS = "SELECT id, name FROM tag";
-    private static final String SQL_FIND_TAG_BY_ID = "SELECT id, name FROM tag WHERE id = ?";
-    private static final String SQL_FIND_TAG_BY_NAME = "SELECT id, name FROM tag WHERE name = ?";
-
-    private final TagMapper tagMapper = new TagMapper();
+    private static final String GET_MOST_WIDELY_USED_TAG_ID_BY_USER_ID = "SELECT gift_certificate_to_tag.tag_id " +
+            "FROM public.order_table " +
+            "JOIN gift_certificate ON gift_certificate.id = order_table.gift_certificate_id " +
+            "JOIN gift_certificate_to_tag ON gift_certificate.id = gift_certificate_to_tag.gift_certificate_id " +
+            "WHERE order_table.user_id = ? GROUP BY gift_certificate_to_tag.tag_id ORDER BY count(gift_certificate_to_tag.tag_id) DESC LIMIT 1";
 
     @Override
     public Tag saveEntity(Tag entity) {
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-
-        jdbcTemplate.update(connection -> {
-            PreparedStatement preparedStatement = connection.prepareStatement(SQL_SAVE_TAG, new String[] {"id"});
-            preparedStatement.setString(1, entity.getName());
-            return preparedStatement;
-        }, keyHolder);
-
-        return findEntityById((Integer) keyHolder.getKey());
+        entity.setId(null);
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        entityManager.persist(entity);
+        entityManager.flush();
+        transaction.commit();
+        return entity;
     }
 
     @Override
     public Tag updateEntity(Tag entity) {
-        if (Objects.nonNull(entity.getName())){
-            jdbcTemplate.update(SQL_UPDATE_TAG_BY_ID, entity.getName(), entity.getId());
-            return findEntityById(entity.getId());
-        } else {
-            return null;
-        }
+        return null;
     }
 
     @Override
-    @Transactional
     public Boolean deleteEntity(Integer id) {
-        jdbcTemplate.update(SQL_DELETE_GIFT_CERTIFICATE_TO_TAG_ENTRY_BY_TAG_ID, id);
-        return jdbcTemplate.update(SQL_DELETE_TAG_BY_ID, id) != 0;
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Tag entity = findEntityById(id);
+        Query query = entityManager.createNativeQuery("DELETE FROM gift_certificate_to_tag WHERE tag_id = ?");
+        query.setParameter(1, entity.getId());
+        query.executeUpdate();
+        entity = entityManager.merge(entity);
+        entityManager.remove(entity);
+        entityManager.flush();
+        transaction.commit();
+        return true;
     }
 
     @Override
     public List<Tag> findAllEntities() {
-        return jdbcTemplate.query(SQL_FIND_ALL_TAGS, tagMapper);
+        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
+        criteriaQuery.from(Tag.class);
+        TypedQuery<Tag> query = entityManager.createQuery(criteriaQuery);
+        List<Tag> result = query.getResultList();
+        return result;
     }
 
     @Override
     public Tag findEntityById(Integer id) {
-        return jdbcTemplate.query(SQL_FIND_TAG_BY_ID, tagMapper, id).stream().findAny().orElse(null);
+        Tag result = entityManager.find(Tag.class, id);
+        return result;
+    }
+
+    /**
+     * returns list of tags by page number
+     * @param pageNumber number of page
+     * @param pageSize size of page
+     * @return list of gift certificates by page number
+     */
+    public List<Tag> findAllEntities(Integer pageNumber, Integer pageSize) {
+        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
+        criteriaQuery.from(Tag.class);
+        TypedQuery<Tag> query = entityManager.createQuery(criteriaQuery).setFirstResult((pageNumber -1) * pageSize).setMaxResults(pageSize);
+        List<Tag> result = query.getResultList();
+        return result;
     }
 
     /**
@@ -89,14 +101,29 @@ public class TagDao implements Dao<Tag> {
      * @return tag with provided name, null if there is no such tag
      */
     public Tag findTagByName(String name){
-        return jdbcTemplate.query(SQL_FIND_TAG_BY_NAME, tagMapper, name).stream().findAny().orElse(null);
+        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaQuery<Tag> criteriaQuery = criteriaBuilder.createQuery(Tag.class);
+        Root<Tag> root = criteriaQuery.from(Tag.class);
+        criteriaQuery.select(root).where(criteriaBuilder.like(root.get("name"), name));
+        TypedQuery<Tag> query = entityManager.createQuery(criteriaQuery);
+        return query.getResultList().stream().findFirst().orElse(null);
     }
 
-    public List<Tag> findTagsById(List<Integer> ids){
-        if (!ids.isEmpty()){
-            return jdbcTemplate.query(SqlGenerator.generateFindTagsByIdArray(ids.size()), tagMapper, ids.toArray());
-        } else {
-            return new ArrayList<>();
-        }
+    /**
+     * returns most widely used tag for user with the highest cost of all orders
+     * @return most widely used tag for user with the highest cost of all orders
+     */
+    public Tag findMostWidelyUsedTagForUserWithHighestCostOfAllOrders() {
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        Query getUserIdWithHighestCostOfAllOrders = entityManager.createNativeQuery(GET_USER_ID_WITH_HIGHEST_COST_OF_ALL_ORDERS);
+        Integer userId = (Integer)getUserIdWithHighestCostOfAllOrders.getResultList().get(0);
+        Query getMostWidelyUsedTagIdByUserId = entityManager.createNativeQuery(GET_MOST_WIDELY_USED_TAG_ID_BY_USER_ID);
+        getMostWidelyUsedTagIdByUserId.setParameter(1, userId);
+        Integer tagId = (Integer) getMostWidelyUsedTagIdByUserId.getResultList().get(0);
+        Tag tag = findEntityById(tagId);
+        transaction.commit();
+        return tag;
     }
 }

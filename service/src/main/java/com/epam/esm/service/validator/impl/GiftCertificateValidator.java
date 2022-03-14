@@ -6,7 +6,6 @@ import com.epam.esm.service.exception.ExceptionCode;
 import com.epam.esm.service.exception.ExceptionMessage;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.validator.api.Validator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -25,14 +24,11 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
     private static final String WHITESPACE = " ";
 
-    private final List<ExceptionMessage> exceptionMessages = new ArrayList<>();
-
-    @Autowired
-    private TagValidator tagValidator;
+    private List<ExceptionMessage> exceptionMessages;
 
     @Override
     public void validate(GiftCertificateDto value, Boolean checkId) throws ServiceException {
-        exceptionMessages.clear();
+        exceptionMessages = new  ArrayList<>();
 
         if (Objects.isNull(value)){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.GIFT_CERTIFICATE_CANNOT_BE_NULL);
@@ -169,10 +165,9 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         }
 
         tags.forEach(tagDto -> {
-            try {
-                tagValidator.validate(tagDto, false);
-            } catch (ServiceException e){
-                exceptionMessages.addAll(e.getExceptionMessages());
+            if (Objects.isNull(tagDto.getId())
+                    && Objects.isNull(tagDto.getName())){
+                exceptionMessages.add(ExceptionMessage.TAG_ID_AND_NAME_CANNOT_BE_NULL_SIMULTANEOUSLY);
             }
         });
     }

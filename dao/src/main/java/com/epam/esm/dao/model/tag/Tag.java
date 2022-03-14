@@ -1,16 +1,26 @@
 package com.epam.esm.dao.model.tag;
 
-import com.epam.esm.dao.model.Entity;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import com.epam.esm.dao.model.EntityModel;
+import lombok.*;
+
+import javax.persistence.*;
+import java.util.Objects;
 
 /**
  * Model class that represents Tag
  */
 
-@Data
+@Getter
+@Setter
+@ToString
+@RequiredArgsConstructor
 @AllArgsConstructor
-public class Tag implements Entity {
+@EqualsAndHashCode
+@Entity
+public class Tag implements EntityModel {
+    @Id
+    @SequenceGenerator(name = "idSequenceTag", sequenceName = "tag_id_seq", allocationSize = 1)
+    @GeneratedValue(generator = "idSequenceTag")
     private Integer id;
     private String name;
 }

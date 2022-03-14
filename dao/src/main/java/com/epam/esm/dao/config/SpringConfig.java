@@ -7,7 +7,11 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.orm.jpa.support.PersistenceAnnotationBeanPostProcessor;
 
+import javax.persistence.Entity;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 import javax.sql.DataSource;
 
 /**
@@ -15,26 +19,15 @@ import javax.sql.DataSource;
  */
 
 @Configuration
-@PropertySource("classpath:jdbcconfig.properties")
 public class SpringConfig {
 
-    @Autowired
-    Environment environment;
-
-    @Bean(name = "dataSource")
-    public DataSource dataSource(){
-        DriverManagerDataSource dataSource = new DriverManagerDataSource();
-
-        dataSource.setDriverClassName(environment.getProperty("dbdriver"));
-        dataSource.setUrl(environment.getProperty("dburl"));
-        dataSource.setUsername(environment.getProperty("dbuser"));
-        dataSource.setPassword(environment.getProperty("dbpass"));
-
-        return dataSource;
+    @Bean
+    public PersistenceAnnotationBeanPostProcessor persistenceAnnotationBeanPostProcessor (){
+        return new PersistenceAnnotationBeanPostProcessor();
     }
 
-    @Bean(name = "jdbcTemplate")
-    public JdbcTemplate jdbcTemplate(){
-        return new JdbcTemplate(dataSource());
+    @Bean
+    public EntityManagerFactory entityManagerFactory (){
+        return Persistence.createEntityManagerFactory("Certificates");
     }
 }

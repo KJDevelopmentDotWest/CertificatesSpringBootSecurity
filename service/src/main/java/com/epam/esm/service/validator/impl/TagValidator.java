@@ -23,11 +23,11 @@ public class TagValidator implements Validator<TagDto> {
 
     private static final String WHITESPACE = " ";
 
-    private final List<ExceptionMessage> exceptionMessages = new ArrayList<>();
+    private List<ExceptionMessage> exceptionMessages;
 
     @Override
     public void validate(TagDto value, Boolean checkId) throws ServiceException {
-        exceptionMessages.clear();
+        exceptionMessages = new ArrayList<>();;
 
         if (Objects.isNull(value)){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.TAG_CANNOT_BE_NULL);
