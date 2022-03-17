@@ -44,7 +44,7 @@ public class GiftCertificateService extends Service<GiftCertificateDto> {
         validator.validate(value, false);
         GiftCertificate savedGiftCertificate = dao.saveEntity(converter.convert(value));
 
-        if (Objects.isNull(savedGiftCertificate)){
+        if (Objects.isNull(getById(savedGiftCertificate.getId()))){
             throw new ServiceException(ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
         }
 

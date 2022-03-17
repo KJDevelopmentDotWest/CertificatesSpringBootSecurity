@@ -1,6 +1,5 @@
 package com.epam.esm.controller.controller;
 
-import com.epam.esm.controller.exceptionhandler.ExceptionHandlerSupport;
 import com.epam.esm.service.dto.giftcertificate.GiftCertificateDto;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.impl.GiftCertificateService;
@@ -11,19 +10,8 @@ import org.springframework.hateoas.Link;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.RequestContext;
+import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Objects;
 
@@ -38,14 +26,11 @@ public class CertificatesController {
     @Autowired
     private GiftCertificateService service;
 
-    @Autowired
-    private ExceptionHandlerSupport exceptionHandlerSupport;
-
     @GetMapping()
     public ResponseEntity<CollectionModel<GiftCertificateDto>> getAll(
             @RequestParam(value = "tagName", required = false) String tagName,
             @RequestParam(value = "searchPart", required = false ) String searchPart,
-            @RequestParam(value = "String orderBy", required = false ) String orderBy,
+            @RequestParam(value = "orderBy", required = false ) String orderBy,
             @RequestParam(value = "page", defaultValue = "1") String page,
             @RequestParam(value = "pageSize", defaultValue = "10") String pageSize) throws ServiceException {
 
@@ -86,7 +71,7 @@ public class CertificatesController {
         GiftCertificateDto createdDto = service.create(giftCertificateDto);
         Link getById = linkTo(methodOn(CertificatesController.class).getById(createdDto.getId())).withRel("getById");
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Location", createdDto.getId().toString());
+        headers.add("Location", getById.getHref());
         return new ResponseEntity<>(EntityModel.of(createdDto, getById), headers, HttpStatus.CREATED);
     }
 
@@ -95,11 +80,5 @@ public class CertificatesController {
         giftCertificateDto.setId(id);
         Link getById = linkTo(methodOn(CertificatesController.class).getById(id)).withSelfRel();
         return new ResponseEntity<>(EntityModel.of(service.update(giftCertificateDto), getById), HttpStatus.OK);
-    }
-
-    @ExceptionHandler({Exception.class})
-    public ResponseEntity<Object> handleException(Exception exception, HttpServletRequest request){
-        RequestContext requestContext = new RequestContext(request);
-        return exceptionHandlerSupport.handleException(exception, requestContext.getLocale());
     }
 }

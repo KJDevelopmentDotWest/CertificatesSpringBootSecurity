@@ -1,9 +1,11 @@
 package com.epam.esm.service.impl;
 
 import com.epam.esm.dao.impl.OrderDao;
+import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import com.epam.esm.dao.model.order.Order;
 import com.epam.esm.service.api.Service;
 import com.epam.esm.service.converter.impl.OrderConverter;
+import com.epam.esm.service.dto.giftcertificate.GiftCertificateDto;
 import com.epam.esm.service.dto.order.OrderDto;
 import com.epam.esm.service.exception.ExceptionCode;
 import com.epam.esm.service.exception.ExceptionMessage;
@@ -14,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -89,7 +92,24 @@ public class OrderService extends Service<OrderDto> {
 
     @Override
     public List<OrderDto> getAll() throws ServiceException {
-        return null;
+        List<Order> daoResult;
+
+        daoResult = dao.findAllEntities();
+
+        return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    public List<OrderDto> getAll(String pageNumber, String pageSize) throws ServiceException {
+        List<Order> daoResult;
+
+        int pageNumberInteger;
+        int pageSizeInteger;
+        pageNumberInteger = parsePageNumber(pageNumber);
+        pageSizeInteger = parsePageSize(pageSize);
+
+        daoResult = dao.findAllEntities(pageNumberInteger, pageSizeInteger);
+
+        return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**

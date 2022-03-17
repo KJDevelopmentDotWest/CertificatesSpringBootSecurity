@@ -3,8 +3,6 @@ package com.epam.esm.controller.controller;
 import com.epam.esm.controller.exceptionhandler.ExceptionHandlerSupport;
 import com.epam.esm.service.dto.order.OrderDto;
 import com.epam.esm.service.dto.user.UserDto;
-import com.epam.esm.service.exception.ExceptionCode;
-import com.epam.esm.service.exception.ExceptionMessage;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.impl.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +12,6 @@ import org.springframework.hateoas.Link;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,9 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.RequestContext;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -36,9 +31,6 @@ public class OrderController {
 
     @Autowired
     private OrderService service;
-
-    @Autowired
-    private ExceptionHandlerSupport exceptionHandlerSupport;
 
     @GetMapping(value = "/{id}")
     public ResponseEntity<EntityModel<OrderDto>> getById(@PathVariable("id") Integer id, @PathVariable("userId") Integer userId) throws ServiceException {
@@ -66,13 +58,7 @@ public class OrderController {
         HttpHeaders headers = new HttpHeaders();
         Link getById = linkTo(methodOn(OrderController.class).getById(createdDto.getId(), userId)).withSelfRel();
         Link getByUserId = linkTo(methodOn(OrderController.class).getByUserId(userId, "1", "10")).withRel("get_by_user_id");
-        headers.add("Location", createdDto.getId().toString());
+        headers.add("Location", getById.getHref());
         return new ResponseEntity<>(EntityModel.of(createdDto, getById, getByUserId), headers, HttpStatus.CREATED);
-    }
-
-    @ExceptionHandler({Exception.class})
-    public ResponseEntity<Object> handleException(Exception exception, HttpServletRequest request){
-        RequestContext requestContext = new RequestContext(request);
-        return exceptionHandlerSupport.handleException(exception, requestContext.getLocale());
     }
 }

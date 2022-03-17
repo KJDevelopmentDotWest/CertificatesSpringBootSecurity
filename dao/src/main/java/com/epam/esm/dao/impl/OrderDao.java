@@ -25,9 +25,6 @@ public class OrderDao implements Dao<Order> {
     @Autowired
     private UserDao userDao;
 
-    @PersistenceUnit
-    private EntityManagerFactory entityManagerFactory;
-
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -69,12 +66,31 @@ public class OrderDao implements Dao<Order> {
 
     @Override
     public List<Order> findAllEntities() {
-        return null;
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Order> criteriaQuery = criteriaBuilder.createQuery(Order.class);
+
+        criteriaQuery.from(Order.class);
+
+        TypedQuery<Order> query = entityManager.createQuery(criteriaQuery);
+
+        return query.getResultList();
     }
 
     @Override
     public Order findEntityById(Integer id) {
         return entityManager.find(Order.class, id);
+    }
+
+    public List<Order> findAllEntities(Integer pageNumber, Integer pageSize) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Order> criteriaQuery = criteriaBuilder.createQuery(Order.class);
+
+        criteriaQuery.from(Order.class);
+
+        TypedQuery<Order> query = entityManager.createQuery(criteriaQuery)
+                .setFirstResult((pageNumber -1) * pageSize).setMaxResults(pageSize);
+
+        return query.getResultList();
     }
 
     /**
@@ -85,7 +101,7 @@ public class OrderDao implements Dao<Order> {
      * @return list of orders by user userId and page number
      */
     public List<Order> findOrdersByUserId(Integer userId, Integer pageNumber, Integer pageSize) {
-        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Order> criteriaQuery = criteriaBuilder.createQuery(Order.class);
         Root<Order> root = criteriaQuery.from(Order.class);
 

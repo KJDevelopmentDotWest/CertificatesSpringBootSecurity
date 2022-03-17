@@ -15,7 +15,7 @@ import javax.persistence.*;
 @Table(name = "user_table")
 public class User implements EntityModel {
     @Id
-    @SequenceGenerator(name = "idSequenceUser", sequenceName = "user_table_id_seq", allocationSize = 1)
+    @SequenceGenerator(name = "idSequenceUser", sequenceName = "user_id_seq", allocationSize = 1)
     @GeneratedValue(generator = "idSequenceUser")
     private Integer id;
     private String name;

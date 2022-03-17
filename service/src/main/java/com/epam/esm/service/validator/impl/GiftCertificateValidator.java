@@ -28,7 +28,7 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
     @Override
     public void validate(GiftCertificateDto value, Boolean checkId) throws ServiceException {
-        exceptionMessages = new  ArrayList<>();
+        exceptionMessages = new ArrayList<>();
 
         if (Objects.isNull(value)){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.GIFT_CERTIFICATE_CANNOT_BE_NULL);
@@ -56,7 +56,7 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
      * @param fieldsCanBeNull true if all fields except id can be null
      */
     public void validate(GiftCertificateDto value, Boolean checkId, Boolean fieldsCanBeNull) throws ServiceException {
-        exceptionMessages.clear();
+        exceptionMessages = new ArrayList<>();
 
         if (Objects.isNull(value)){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.GIFT_CERTIFICATE_CANNOT_BE_NULL);
