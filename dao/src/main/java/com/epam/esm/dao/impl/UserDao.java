@@ -3,6 +3,7 @@ package com.epam.esm.dao.impl;
 import com.epam.esm.dao.api.Dao;
 import com.epam.esm.dao.model.user.User;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -12,15 +13,16 @@ import java.util.List;
 @Repository
 public class UserDao implements Dao<User> {
 
-    @PersistenceUnit
-    private EntityManagerFactory entityManagerFactory;
-
     @PersistenceContext
     private EntityManager entityManager;
 
     @Override
+    @Transactional
     public User saveEntity(User entity) {
-        return null;
+        entity.setId(null);
+        entityManager.persist(entity);
+        entityManager.flush();
+        return entity;
     }
 
     @Override
@@ -35,7 +37,7 @@ public class UserDao implements Dao<User> {
 
     @Override
     public List<User> findAllEntities() {
-        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
         criteriaQuery.from(User.class);
         TypedQuery<User> query = entityManager.createQuery(criteriaQuery);
@@ -55,7 +57,7 @@ public class UserDao implements Dao<User> {
      * @return list of gift certificates by page number
      */
     public List<User> findAllEntities(Integer pageNumber, Integer pageSize) {
-        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
         criteriaQuery.from(User.class);
         TypedQuery<User> query = entityManager.createQuery(criteriaQuery).setFirstResult((pageNumber -1) * pageSize).setMaxResults(pageSize);

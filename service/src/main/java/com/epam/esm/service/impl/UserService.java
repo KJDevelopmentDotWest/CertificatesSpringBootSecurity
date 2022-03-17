@@ -27,7 +27,7 @@ public class UserService extends Service<UserDto> {
 
     @Override
     public UserDto create(UserDto value) throws ServiceException {
-        throw new ServiceException(ExceptionCode.OPERATION_IS_NOT_SUPPORTED);
+        return converter.convert(dao.saveEntity(converter.convert(value)));
     }
 
     @Override

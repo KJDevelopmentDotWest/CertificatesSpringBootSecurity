@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,13 +23,14 @@ import java.util.ResourceBundle;
  * Util class that provides exception handling
  */
 
-@Component
+@ControllerAdvice
 public class ExceptionHandlerSupport {
 
     private ResourceBundle resourceBundle;
 
     private static final Logger logger = LogManager.getLogger(ExceptionHandlerSupport.class);
 
+    @ExceptionHandler
     public ResponseEntity<Object> handleException(Exception exception, Locale locale){
         Map<String, Object> hashMap = new HashMap<>();
         resourceBundle = ResourceBundle.getBundle("locale", locale);

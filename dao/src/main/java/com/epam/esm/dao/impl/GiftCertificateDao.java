@@ -28,15 +28,8 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     @Autowired
     private TagDao tagDao;
 
-    @PersistenceUnit
-    private EntityManagerFactory entityManagerFactory;
-
     @PersistenceContext
     private EntityManager entityManager;
-
-    //used in get operations for entities with lazy loaded fields
-    @PersistenceContext(type = PersistenceContextType.EXTENDED)
-    private EntityManager entityManagerExtended;
 
     private static final Logger logger = LogManager.getLogger(GiftCertificateDao.class);
 
@@ -49,7 +42,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         addTagsIfNotExists(entity.getTags());
         entityManager.persist(entity);
         entityManager.flush();
-        return findEntityById(entity.getId());
+        return entity;
     }
 
     @Override
@@ -98,32 +91,33 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         GiftCertificate entity = findEntityById(id);
 
         if (Objects.nonNull(entity)){
-            Query query = entityManager.createNativeQuery("DELETE FROM order_table WHERE gift_certificate_id = ?");
-            query.setParameter(1, entity.getId());
+            Query query = entityManager.createQuery("DELETE FROM Order s WHERE s.giftCertificate.id = :id");
+            query.setParameter("id", entity.getId());
             query.executeUpdate();
             entity = entityManager.merge(entity);
             entityManager.remove(entity);
         }
 
         entityManager.flush();
+
         return Objects.nonNull(entity);
     }
 
     @Override
     public List<GiftCertificate> findAllEntities() {
-        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<GiftCertificate> criteriaQuery = criteriaBuilder.createQuery(GiftCertificate.class);
 
         criteriaQuery.from(GiftCertificate.class);
 
-        TypedQuery<GiftCertificate> query = entityManagerExtended.createQuery(criteriaQuery);
+        TypedQuery<GiftCertificate> query = entityManager.createQuery(criteriaQuery);
 
         return query.getResultList();
     }
 
     @Override
     public GiftCertificate findEntityById(Integer id) {
-        return entityManagerExtended.find(GiftCertificate.class, id);
+        return entityManager.find(GiftCertificate.class, id);
     }
 
     /**
@@ -133,12 +127,12 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
      * @return list of gift certificates by page number
      */
     public List<GiftCertificate> findAllEntities(Integer pageNumber, Integer pageSize) {
-        CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<GiftCertificate> criteriaQuery = criteriaBuilder.createQuery(GiftCertificate.class);
 
         criteriaQuery.from(GiftCertificate.class);
 
-        TypedQuery<GiftCertificate> query = entityManagerExtended.createQuery(criteriaQuery)
+        TypedQuery<GiftCertificate> query = entityManager.createQuery(criteriaQuery)
                 .setFirstResult((pageNumber -1) * pageSize).setMaxResults(pageSize);
 
         return query.getResultList();
@@ -161,7 +155,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         List<GiftCertificate> result;
 
         if (tagNames.isEmpty()){
-            CriteriaBuilder criteriaBuilder = entityManagerFactory.getCriteriaBuilder();
+            CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
             CriteriaQuery<GiftCertificate> criteriaQuery = criteriaBuilder.createQuery(GiftCertificate.class);
             Root<GiftCertificate> root = criteriaQuery.from(GiftCertificate.class);
             List<Predicate> predicates = new ArrayList<>();
@@ -182,9 +176,9 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
             }
             if (orderByDate) {
                 if (Objects.isNull(ascending) || ascending){
-                    orders.add(criteriaBuilder.asc(root.get("date")));
+                    orders.add(criteriaBuilder.asc(root.get("lastUpdateDate")));
                 } else {
-                    orders.add(criteriaBuilder.desc(root.get("date")));
+                    orders.add(criteriaBuilder.desc(root.get("lastUpdateDate")));
                 }
             }
 
@@ -195,7 +189,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
                 criteriaQuery.orderBy(orders);
             }
 
-            TypedQuery<GiftCertificate> query = entityManagerExtended.createQuery(criteriaQuery).setFirstResult((pageNumber -1) * pageSize).setMaxResults(pageSize);
+            TypedQuery<GiftCertificate> query = entityManager.createQuery(criteriaQuery).setFirstResult((pageNumber -1) * pageSize).setMaxResults(pageSize);
 
             result = query.getResultList();
         } else {
@@ -219,7 +213,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
             objectsToAdd.add(pageSize);
             objectsToAdd.add((pageNumber -1) * pageSize);
 
-            Query query = entityManagerExtended.createNativeQuery(SqlGenerator.generateSQLForGiftCertificateFindWithParameters(tagNames.size(), whereStringLikeColumnNames, orderByColumnNames, ascending));
+            Query query = entityManager.createNativeQuery(SqlGenerator.generateSQLForGiftCertificateFindWithParameters(tagNames.size(), whereStringLikeColumnNames, orderByColumnNames, ascending));
 
             for (int i = 0; i < objectsToAdd.size(); i++) {
                 query.setParameter(i+1, objectsToAdd.get(i));
