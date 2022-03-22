@@ -1,4 +1,6 @@
 plugins {
+    id 'org.springframework.boot' version '2.6.3'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
 }
 
@@ -17,15 +19,16 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
 
-    implementation 'org.springframework:spring-jdbc:5.3.15'
-    implementation 'org.springframework:spring-context:5.3.15'
-
     compileOnly 'org.projectlombok:lombok:1.18.22'
     annotationProcessor 'org.projectlombok:lombok:1.18.22'
 
     testImplementation group: 'org.springframework', name: 'spring-test', version: '5.3.15'
     testImplementation group: 'org.mockito', name: 'mockito-core', version: '4.3.1'
 
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    implementation 'io.jsonwebtoken:jjwt:0.9.1'
 }
 
 test {

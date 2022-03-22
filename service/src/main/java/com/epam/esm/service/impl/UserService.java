@@ -19,11 +19,15 @@ import java.util.stream.Collectors;
 @Component
 public class UserService extends Service<UserDto> {
 
-    @Autowired
-    private UserDao dao;
+    private final UserDao dao;
+
+    private final UserConverter converter;
 
     @Autowired
-    private UserConverter converter;
+    public UserService(UserDao dao, UserConverter converter) {
+        this.dao = dao;
+        this.converter = converter;
+    }
 
     @Override
     public UserDto create(UserDto value) throws ServiceException {
@@ -66,8 +70,17 @@ public class UserService extends Service<UserDto> {
      * @return list of gift certificates by page number
      */
     public List<UserDto> getAll(String pageNumber, String pageSize) throws ServiceException {
-        List<User> daoResult;
-        daoResult = dao.findAllEntities(parsePageNumber(pageNumber), parsePageSize(pageSize));
+        List<User> daoResult = dao.findAllEntities(parsePageNumber(pageNumber), parsePageSize(pageSize));
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    public UserDto getByUsername(String username) throws ServiceException {
+        User result = dao.findByUsername(username);
+
+        if (Objects.isNull(result)){
+            throw new ServiceException("");
+        }
+
+        return converter.convert(result);
     }
 }

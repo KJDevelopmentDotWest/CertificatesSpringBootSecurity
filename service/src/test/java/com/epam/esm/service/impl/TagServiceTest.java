@@ -51,11 +51,11 @@ class TagServiceTest {
         tagDtos.add(tagDto);
         tagDtos.add(tagDto2);
 
-        Mockito.when(tagDao.findEntityById(Mockito.any())).thenReturn(tag);
-        Mockito.when(tagDao.findAllEntities()).thenReturn(tags);
-        Mockito.when(tagDao.saveEntity(tagNullId)).thenReturn(tag);
-        Mockito.when(tagDao.deleteEntity(Mockito.any())).thenReturn(true);
-        Mockito.when(tagDao.findTagByName("name")).thenReturn(tag);
+//        Mockito.when(tagDao.findEntityById(Mockito.any())).thenReturn(tag);
+//        Mockito.when(tagDao.findAllEntities()).thenReturn(tags);
+//        Mockito.when(tagDao.saveEntity(tagNullId)).thenReturn(tag);
+//        Mockito.when(tagDao.deleteEntity(Mockito.any())).thenReturn(true);
+//        Mockito.when(tagDao.findTagByName("name")).thenReturn(tag);
     }
 
     @Test

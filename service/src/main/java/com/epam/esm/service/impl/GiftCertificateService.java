@@ -12,7 +12,6 @@ import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -151,12 +150,7 @@ public class GiftCertificateService extends Service<GiftCertificateDto> {
         pageNumberInteger = parsePageNumber(pageNumber);
         pageSizeInteger = parsePageSize(pageSize);
 
-        try {
-            daoResult = dao.findGiftCertificatesWithParameters(tagNamesList, searchPart, orderByName, orderByDate, ascendingBoolean, pageNumberInteger, pageSizeInteger);
-        } catch (DataAccessException e){
-            logger.error(e);
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
+        daoResult = dao.findGiftCertificatesWithParameters(tagNamesList, searchPart, orderByName, orderByDate, ascendingBoolean, pageNumberInteger, pageSizeInteger);
 
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
     }

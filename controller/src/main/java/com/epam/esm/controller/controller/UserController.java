@@ -22,8 +22,11 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 @RequestMapping("/users")
 public class UserController {
 
-    @Autowired
-    private UserService service;
+    private final UserService service;
+
+    public UserController(UserService service) {
+        this.service = service;
+    }
 
     @GetMapping()
     public ResponseEntity<CollectionModel<UserDto>> getAll(@RequestParam(value = "page", defaultValue = "1") String page,

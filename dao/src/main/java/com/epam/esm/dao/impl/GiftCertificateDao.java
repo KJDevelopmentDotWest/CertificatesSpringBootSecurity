@@ -147,7 +147,6 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
      * @param ascending true for ascending order, false if descending. ignored if orderByName and orderByDate is null. true if null
      * @param pageNumber number of page
      * @param pageSize size of page
-     * @throws org.springframework.dao.DataAccessException if database error occurred
      * @return list of gift certificates that match parameters
      */
     public List<GiftCertificate> findGiftCertificatesWithParameters (List<String> tagNames, String searchPart, Boolean orderByName,

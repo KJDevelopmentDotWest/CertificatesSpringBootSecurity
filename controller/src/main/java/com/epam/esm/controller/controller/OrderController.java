@@ -53,7 +53,7 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<EntityModel<OrderDto>> create(@PathVariable("userId") Integer userId, @RequestBody OrderDto order) throws ServiceException {
-        order.setUser(new UserDto(userId, null));
+        order.setUser(new UserDto(userId, null, null, null, null,null));
         OrderDto createdDto = service.create(order);
         HttpHeaders headers = new HttpHeaders();
         Link getById = linkTo(methodOn(OrderController.class).getById(createdDto.getId(), userId)).withSelfRel();
