@@ -4,10 +4,8 @@ import com.epam.esm.dao.api.Dao;
 import com.epam.esm.dao.model.tag.Tag;
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import com.epam.esm.dao.sqlgenerator.SqlGenerator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
@@ -22,7 +20,7 @@ import java.util.stream.Collectors;
  * Dao interface implementation for GiftCertificate with ability to perform CRUD operations
  */
 
-@Repository
+@Component
 public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     @Autowired
@@ -30,8 +28,6 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     @PersistenceContext
     private EntityManager entityManager;
-
-    private static final Logger logger = LogManager.getLogger(GiftCertificateDao.class);
 
     @Override
     @Transactional

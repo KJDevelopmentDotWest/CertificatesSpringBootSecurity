@@ -35,7 +35,7 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         }
 
         if (checkId) {
-            validateId(value.getId());
+            validateIdNotNullAndPositive(value.getId());
         }
 
         validateName(value.getName(), false);
@@ -63,7 +63,7 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         }
 
         if (checkId) {
-            validateId(value.getId());
+            validateIdNotNullAndPositive(value.getId());
         }
 
         validateName(value.getName(), fieldsCanBeNull);
@@ -74,16 +74,6 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
         if (!exceptionMessages.isEmpty()){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, exceptionMessages);
-        }
-    }
-
-    private void validateId(Integer id) {
-        if (Objects.isNull(id)){
-            exceptionMessages.add(ExceptionMessage.GIFT_CERTIFICATE_ID_CANNOT_BE_NULL);
-            return;
-        }
-        if (id < 1){
-            exceptionMessages.add(ExceptionMessage.GIFT_CERTIFICATE_ID_CANNOT_BE_NEGATIVE);
         }
     }
 

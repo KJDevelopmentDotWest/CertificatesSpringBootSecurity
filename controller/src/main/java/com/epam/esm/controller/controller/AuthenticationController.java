@@ -29,6 +29,7 @@ public class AuthenticationController {
 
     private final UserService service;
 
+    @Autowired
     public AuthenticationController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, UserService service) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;

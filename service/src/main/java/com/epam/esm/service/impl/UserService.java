@@ -8,7 +8,9 @@ import com.epam.esm.service.dto.user.UserDto;
 import com.epam.esm.service.exception.ExceptionCode;
 import com.epam.esm.service.exception.ExceptionMessage;
 import com.epam.esm.service.exception.ServiceException;
+import com.epam.esm.service.validator.impl.UserValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -23,14 +25,29 @@ public class UserService extends Service<UserDto> {
 
     private final UserConverter converter;
 
+    private final BCryptPasswordEncoder passwordEncoder;
+
+    private final UserValidator validator;
+
     @Autowired
-    public UserService(UserDao dao, UserConverter converter) {
+    public UserService(UserDao dao, UserConverter converter, BCryptPasswordEncoder passwordEncoder, UserValidator validator) {
         this.dao = dao;
         this.converter = converter;
+        this.passwordEncoder = passwordEncoder;
+        this.validator = validator;
     }
 
+    /**
+     * validates value and sends save request to corresponding dao class
+     * note that password in method argument must be decrypted, but returned user will have encrypted password
+     * @param value value to be saved
+     * @return saved value
+     * @throws ServiceException if user is invalid, value cannot be created, or database error occurred
+     */
     @Override
     public UserDto create(UserDto value) throws ServiceException {
+        validator.validate(value, false);
+        value.setPassword(passwordEncoder.encode(value.getPassword()));
         return converter.convert(dao.saveEntity(converter.convert(value)));
     }
 

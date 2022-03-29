@@ -1,5 +1,6 @@
 package com.epam.esm.controller.controller;
 
+import com.epam.esm.service.dto.role.Role;
 import com.epam.esm.service.dto.user.UserDto;
 import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.impl.UserService;
@@ -9,11 +10,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -24,8 +21,18 @@ public class UserController {
 
     private final UserService service;
 
+    @Autowired
     public UserController(UserService service) {
         this.service = service;
+    }
+
+    @PostMapping()
+    public ResponseEntity<EntityModel<UserDto>> create(@RequestBody UserDto userDto) throws ServiceException {
+        userDto.setRole(Role.USER);
+        UserDto createdUser = service.create(userDto);
+        Link getById = linkTo(methodOn(UserController.class).getById(createdUser.getId())).withSelfRel();
+        Link root = linkTo(methodOn(UserController.class).getAll("1", "10")).withRel("all");
+        return new ResponseEntity<>(EntityModel.of(createdUser, getById, root), HttpStatus.CREATED);
     }
 
     @GetMapping()

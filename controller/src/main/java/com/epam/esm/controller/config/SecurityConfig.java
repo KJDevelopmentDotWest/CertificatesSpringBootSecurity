@@ -1,10 +1,12 @@
 package com.epam.esm.controller.config;
 
 import com.epam.esm.controller.filter.JwtFilterConfigurer;
-import com.epam.esm.controller.filter.JwtTokenFilter;
+import com.epam.esm.service.dto.role.Role;
+import com.epam.esm.service.security.jwt.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -13,11 +15,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final JwtTokenFilter jwtTokenFilter;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Autowired
-    public SecurityConfig(JwtTokenFilter jwtTokenFilter) {
-        this.jwtTokenFilter = jwtTokenFilter;
+    public SecurityConfig(JwtTokenProvider jwtTokenProvider) {
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Bean
@@ -35,10 +37,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests()
                 .antMatchers("/auth").permitAll()
-                .antMatchers("/tags").hasRole("USER")
-                .antMatchers( "/certificates", "/users").hasRole("ADMIN")
-                .anyRequest().authenticated()
+                .antMatchers(HttpMethod.GET, "/tags/**", "/certificates/**", "/users/**", "/users/{userId}/orders/**").hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
+                .antMatchers(HttpMethod.POST, "/users/{userId}/orders/**", "/users/**").hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
+                .anyRequest().hasAuthority(Role.ADMIN.name())
                 .and()
-                .apply(new JwtFilterConfigurer(jwtTokenFilter));
+                .apply(new JwtFilterConfigurer(jwtTokenProvider));
     }
 }
