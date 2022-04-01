@@ -23,37 +23,25 @@ public class TagValidator implements Validator<TagDto> {
 
     private static final String WHITESPACE = " ";
 
-    private List<ExceptionMessage> exceptionMessages;
-
     @Override
     public void validate(TagDto value, Boolean checkId) throws ServiceException {
-        exceptionMessages = new ArrayList<>();;
+        List<ExceptionMessage> exceptionMessages = new ArrayList<>();;
 
         if (Objects.isNull(value)){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.TAG_CANNOT_BE_NULL);
         }
 
         if (checkId){
-            validateId(value.getId());
+            validateIdNotNullAndPositive(value.getId());
         }
-        validateName(value.getName());
+        validateName(value.getName(), exceptionMessages);
 
         if (!exceptionMessages.isEmpty()){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, exceptionMessages);
         }
     }
 
-    private void validateId(Integer id) {
-        if (Objects.isNull(id)){
-            exceptionMessages.add(ExceptionMessage.TAG_ID_CANNOT_BE_NULL);
-            return;
-        }
-        if (id < 1){
-            exceptionMessages.add(ExceptionMessage.TAG_ID_CANNOT_BE_NEGATIVE);
-        }
-    }
-
-    private void validateName(String name) {
+    private void validateName(String name, List<ExceptionMessage> exceptionMessages) {
         if (Objects.isNull(name)){
             exceptionMessages.add(ExceptionMessage.TAG_NAME_CANNOT_BE_NULL);
             return;

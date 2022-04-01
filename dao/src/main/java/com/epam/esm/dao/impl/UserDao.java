@@ -2,7 +2,6 @@ package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
 import com.epam.esm.dao.model.user.User;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,7 +11,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.util.List;
 
-@Component
+@Repository
 public class UserDao implements Dao<User> {
 
     @PersistenceContext(type = PersistenceContextType.EXTENDED)

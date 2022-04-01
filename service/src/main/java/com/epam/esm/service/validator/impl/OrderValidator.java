@@ -19,39 +19,28 @@ import java.util.Objects;
 
 @Component
 public class OrderValidator implements Validator<OrderDto> {
-    private List<ExceptionMessage> exceptionMessages;
 
     @Override
     public void validate(OrderDto value, Boolean checkId) throws ServiceException {
-        exceptionMessages = new  ArrayList<>();
+        List<ExceptionMessage> exceptionMessages = new  ArrayList<>();
 
         if (Objects.isNull(value)){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.ORDER_CANNOT_BE_NULL);
         }
 
         if (checkId){
-            validateId(value.getId());
+            validateIdNotNullAndPositive(value.getId());
         }
 
-        validateUser(value.getUser());
-        validateGiftCertificate(value.getGiftCertificate());
+        validateUser(value.getUser(), exceptionMessages);
+        validateGiftCertificate(value.getGiftCertificate(), exceptionMessages);
 
         if (!exceptionMessages.isEmpty()){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, exceptionMessages);
         }
     }
 
-    private void validateId(Integer id) {
-        if (Objects.isNull(id)){
-            exceptionMessages.add(ExceptionMessage.ORDER_ID_CANNOT_BE_NULL);
-            return;
-        }
-        if (id < 1){
-            exceptionMessages.add(ExceptionMessage.ORDER_ID_CANNOT_BE_NEGATIVE);
-        }
-    }
-
-    private void validateUser(UserDto user) {
+    private void validateUser(UserDto user, List<ExceptionMessage> exceptionMessages) {
         if (Objects.isNull(user)){
             exceptionMessages.add(ExceptionMessage.ORDER_USER_CANNOT_BE_NULL);
             return;
@@ -65,7 +54,7 @@ public class OrderValidator implements Validator<OrderDto> {
         }
     }
 
-    private void validateGiftCertificate(GiftCertificateDto giftCertificate) {
+    private void validateGiftCertificate(GiftCertificateDto giftCertificate, List<ExceptionMessage> exceptionMessages) {
         if (Objects.isNull(giftCertificate)){
             exceptionMessages.add(ExceptionMessage.ORDER_GIFT_CERTIFICATE_CANNOT_BE_NULL);
             return;

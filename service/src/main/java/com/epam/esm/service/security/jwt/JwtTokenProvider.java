@@ -4,12 +4,10 @@ import com.epam.esm.service.security.exception.JwtAuthenticationException;
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -19,15 +17,12 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    private String secret = "secret";
-    private final Long expiredTime = 3600000L;
+    @Value("${jwt.token.secret}")
+    private String secret;
+    @Value("${jwt.token.expired}")
+    private Long expiredTime;
 
     private final UserDetailsService userDetailsService;
-
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     @PostConstruct
     protected void init() {

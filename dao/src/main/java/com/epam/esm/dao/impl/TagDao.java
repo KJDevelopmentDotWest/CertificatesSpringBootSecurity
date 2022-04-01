@@ -2,7 +2,7 @@ package com.epam.esm.dao.impl;
 
 import com.epam.esm.dao.api.Dao;
 import com.epam.esm.dao.model.tag.Tag;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
@@ -15,7 +15,7 @@ import java.util.List;
  * Dao interface implementation for Tag with ability to perform CRUD operations
  */
 
-@Component
+@Repository
 public class TagDao implements Dao<Tag> {
 
     @PersistenceContext

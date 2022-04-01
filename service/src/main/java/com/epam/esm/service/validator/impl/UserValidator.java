@@ -26,11 +26,9 @@ public class UserValidator implements Validator<UserDto> {
 
     private static final String WHITESPACE = " ";
 
-    private List<ExceptionMessage> exceptionMessages;
-
     @Override
     public void validate(UserDto value, Boolean checkId) throws ServiceException {
-        exceptionMessages = new ArrayList<>();
+        List<ExceptionMessage> exceptionMessages = new ArrayList<>();
 
         if (Objects.isNull(value)){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.USER_CANNOT_BE_NULL);
@@ -40,18 +38,18 @@ public class UserValidator implements Validator<UserDto> {
             validateIdNotNullAndPositive(value.getId());
         }
 
-        validateFirstname(value.getFirstname(), false);
-        validateLastname(value.getLastname(), false);
-        validateUsername(value.getUsername(), false);
-        validatePassword(value.getPassword(), false);
-        validateRole(value.getRole(), false);
+        validateFirstname(value.getFirstname(), false, exceptionMessages);
+        validateLastname(value.getLastname(), false, exceptionMessages);
+        validateUsername(value.getUsername(), false, exceptionMessages);
+        validatePassword(value.getPassword(), false, exceptionMessages);
+        validateRole(value.getRole(), false, exceptionMessages);
 
         if (!exceptionMessages.isEmpty()){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, exceptionMessages);
         }
     }
 
-    private void validateFirstname(String firstname, Boolean canBeNull) {
+    private void validateFirstname(String firstname, Boolean canBeNull, List<ExceptionMessage> exceptionMessages) {
         if (Objects.isNull(firstname)){
             if (!canBeNull) {
                 exceptionMessages.add(ExceptionMessage.USER_FIRSTNAME_CANNOT_BE_NULL);
@@ -73,7 +71,7 @@ public class UserValidator implements Validator<UserDto> {
         }
     }
 
-    private void validateLastname(String lastname, Boolean canBeNull) {
+    private void validateLastname(String lastname, Boolean canBeNull, List<ExceptionMessage> exceptionMessages) {
         if (Objects.isNull(lastname)){
             if (!canBeNull) {
                 exceptionMessages.add(ExceptionMessage.USER_LASTNAME_CANNOT_BE_NULL);
@@ -95,7 +93,7 @@ public class UserValidator implements Validator<UserDto> {
         }
     }
 
-    private void validateUsername(String username, Boolean canBeNull) {
+    private void validateUsername(String username, Boolean canBeNull, List<ExceptionMessage> exceptionMessages) {
         if (Objects.isNull(username)){
             if (!canBeNull) {
                 exceptionMessages.add(ExceptionMessage.USER_USERNAME_CANNOT_BE_NULL);
@@ -117,7 +115,7 @@ public class UserValidator implements Validator<UserDto> {
         }
     }
 
-    private void validatePassword(String password, Boolean canBeNull) {
+    private void validatePassword(String password, Boolean canBeNull, List<ExceptionMessage> exceptionMessages) {
         if (Objects.isNull(password)){
             if (!canBeNull) {
                 exceptionMessages.add(ExceptionMessage.USER_PASSWORD_CANNOT_BE_NULL);
@@ -139,7 +137,7 @@ public class UserValidator implements Validator<UserDto> {
         }
     }
 
-    private void validateRole(Role role, Boolean canBeNull) {
+    private void validateRole(Role role, Boolean canBeNull, List<ExceptionMessage> exceptionMessages) {
         if (Objects.isNull(role)){
             if (!canBeNull) {
                 exceptionMessages.add(ExceptionMessage.USER_ROLE_CANNOT_BE_NULL);

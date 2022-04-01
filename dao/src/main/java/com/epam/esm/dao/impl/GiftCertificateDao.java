@@ -5,7 +5,7 @@ import com.epam.esm.dao.model.tag.Tag;
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import com.epam.esm.dao.sqlgenerator.SqlGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  * Dao interface implementation for GiftCertificate with ability to perform CRUD operations
  */
 
-@Component
+@Repository
 public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     @Autowired
@@ -188,36 +188,42 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
 
             result = query.getResultList();
         } else {
-            List<Object> objectsToAdd = tagNames.stream().map(tagName -> "%," + tagName + ",%").collect(Collectors.toCollection(ArrayList::new));
-            List<String> whereStringLikeColumnNames = new ArrayList<>();
-            if (Objects.nonNull(searchPart)){
-                whereStringLikeColumnNames.add("name");
-                objectsToAdd.add(searchPart);
-                whereStringLikeColumnNames.add("description");
-                objectsToAdd.add(searchPart);
-            }
-
-            List<String> orderByColumnNames = new ArrayList<>();
-            if (orderByName){
-                orderByColumnNames.add("name");
-            }
-            if (orderByDate){
-                orderByColumnNames.add("last_update_date");
-            }
-
-            objectsToAdd.add(pageSize);
-            objectsToAdd.add((pageNumber -1) * pageSize);
-
-            Query query = entityManager.createNativeQuery(SqlGenerator.generateSQLForGiftCertificateFindWithParameters(tagNames.size(), whereStringLikeColumnNames, orderByColumnNames, ascending));
-
-            for (int i = 0; i < objectsToAdd.size(); i++) {
-                query.setParameter(i+1, objectsToAdd.get(i));
-            }
-
-            List<Object> ids = query.getResultList();
-            result = ids.stream().map(obj -> findEntityById((Integer) obj)).collect(Collectors.toCollection(ArrayList::new));
+            result = findGiftCertificatesWithParametersViaNativeQuery(tagNames, searchPart, orderByName,
+                    orderByDate, ascending, pageNumber, pageSize);
         }
         return result;
+    }
+
+    private List<GiftCertificate> findGiftCertificatesWithParametersViaNativeQuery (List<String> tagNames, String searchPart, Boolean orderByName,
+                                                                                    Boolean orderByDate, Boolean ascending, Integer pageNumber, Integer pageSize) {
+        List<Object> objectsToAdd = tagNames.stream().map(tagName -> "%," + tagName + ",%").collect(Collectors.toCollection(ArrayList::new));
+        List<String> whereStringLikeColumnNames = new ArrayList<>();
+        if (Objects.nonNull(searchPart)){
+            whereStringLikeColumnNames.add("name");
+            objectsToAdd.add(searchPart);
+            whereStringLikeColumnNames.add("description");
+            objectsToAdd.add(searchPart);
+        }
+
+        List<String> orderByColumnNames = new ArrayList<>();
+        if (orderByName){
+            orderByColumnNames.add("name");
+        }
+        if (orderByDate){
+            orderByColumnNames.add("last_update_date");
+        }
+
+        objectsToAdd.add(pageSize);
+        objectsToAdd.add((pageNumber -1) * pageSize);
+
+        Query query = entityManager.createNativeQuery(SqlGenerator.generateSQLForGiftCertificateFindWithParameters(tagNames.size(), whereStringLikeColumnNames, orderByColumnNames, ascending));
+
+        for (int i = 0; i < objectsToAdd.size(); i++) {
+            query.setParameter(i+1, objectsToAdd.get(i));
+        }
+
+        List<Object> ids = query.getResultList();
+        return ids.stream().map(obj -> findEntityById((Integer) obj)).collect(Collectors.toCollection(ArrayList::new));
     }
 
     private void addTagsIfNotExists(List<Tag> tags){
