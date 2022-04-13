@@ -41,7 +41,7 @@ public class GiftCertificate implements EntityModel {
     @Column(name = "last_update_date")
     private LocalDateTime lastUpdateDate;
 
-    @ManyToMany(targetEntity = Tag.class)
+    @ManyToMany(targetEntity = Tag.class, fetch = FetchType.EAGER)
     @JoinTable(name = "gift_certificate_to_tag",
             joinColumns = {@JoinColumn(name = "gift_certificate_id", referencedColumnName="id")},
             inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName="id")})

@@ -1,5 +1,6 @@
 package com.epam.esm.controller.filter;
 
+import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.security.jwt.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -25,7 +26,7 @@ public class JwtTokenFilter extends GenericFilterBean {
     }
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException{
         String token = ((HttpServletRequest)request).getHeader("Authorization");
 
         if (Objects.nonNull(token) && jwtTokenProvider.validateToken(token)){

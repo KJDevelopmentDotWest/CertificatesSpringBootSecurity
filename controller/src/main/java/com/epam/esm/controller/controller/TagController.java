@@ -51,7 +51,7 @@ public class TagController {
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<Object> delete(@PathVariable("id") Integer id) throws ServiceException {
         service.delete(id);
-        return new ResponseEntity<>(EntityModel.of(getDeleteLinks()), HttpStatus.OK);
+        return new ResponseEntity<>(CollectionModel.of(getDeleteLinks()), HttpStatus.OK);
     }
 
     @PostMapping()

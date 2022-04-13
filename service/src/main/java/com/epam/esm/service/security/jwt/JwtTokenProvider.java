@@ -1,5 +1,6 @@
 package com.epam.esm.service.security.jwt;
 
+import com.epam.esm.service.exception.ServiceException;
 import com.epam.esm.service.security.exception.JwtAuthenticationException;
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +18,8 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${jwt.token.secret}")
-    private String secret;
-    @Value("${jwt.token.expired}")
-    private Long expiredTime;
+    private String secret = "secret";
+    private final Long expiredTime = 3600000L;
 
     private final UserDetailsService userDetailsService;
 

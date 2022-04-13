@@ -47,6 +47,9 @@ public class UserService extends Service<UserDto> {
     @Override
     public UserDto create(UserDto value) throws ServiceException {
         validator.validate(value, false);
+        if (Objects.nonNull(dao.findByUsername(value.getUsername()))){
+            throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.USER_USERNAME_MUST_BE_UNIQUE);
+        }
         value.setPassword(passwordEncoder.encode(value.getPassword()));
         return converter.convert(dao.saveEntity(converter.convert(value)));
     }

@@ -31,15 +31,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                .httpBasic().disable()
-                .csrf().disable()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .httpBasic()
+                    .disable()
+                .csrf()
+                    .disable()
+                .sessionManagement()
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/auth").permitAll()
-                .antMatchers(HttpMethod.GET, "/tags/**", "/certificates/**", "/users/**", "/users/{userId}/orders/**").hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
-                .antMatchers(HttpMethod.POST, "/users/{userId}/orders/**", "/users/**").hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
-                .anyRequest().hasAuthority(Role.ADMIN.name())
+                    .antMatchers("/auth")
+                        .permitAll()
+                    .antMatchers(HttpMethod.GET, "/certificates/**")
+                        .permitAll()
+                    .antMatchers(HttpMethod.POST, "/users/**")
+                        .permitAll()
+                    .antMatchers(HttpMethod.GET, "/tags/**", "/users/**", "/users/{userId}/orders/**")
+                        .hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
+                    .antMatchers(HttpMethod.POST, "/users/{userId}/orders/**")
+                        .hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
+                    .anyRequest().hasAuthority(Role.ADMIN.name())
                 .and()
                 .apply(new JwtFilterConfigurer(jwtTokenProvider));
     }
