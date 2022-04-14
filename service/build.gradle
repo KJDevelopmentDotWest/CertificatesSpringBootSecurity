@@ -11,6 +11,14 @@ repositories {
     mavenCentral()
 }
 
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled =  true
+}
+
 dependencies {
     implementation(project(":dao"))
 
