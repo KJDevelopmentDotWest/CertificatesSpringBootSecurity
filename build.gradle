@@ -1,5 +1,12 @@
 plugins {
     id 'java'
+    id "org.sonarqube" version "3.3"
+    id 'jacoco'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
 }
 
 group 'org.epam.esm'
@@ -13,5 +20,32 @@ dependencies {
 }
 
 test {
+    finalizedBy jacocoTestReport
     useJUnitPlatform()
+}
+
+sonarqube {
+    properties {
+        property "sonar.java.coveragePlugin", "jacoco"
+        property "sonar.projectKey", "Sonar"
+    }
+}
+
+tasks.named('sonarqube').configure {
+    dependsOn test
+}
+
+task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
+    description = 'Generates an aggregate report from all subprojects'
+    dependsOn(subprojects.test)
+
+    additionalSourceDirs.from = files(subprojects.sourceSets.main.allSource.srcDirs)
+    sourceDirectories.from = files(subprojects.sourceSets.main.allSource.srcDirs)
+    classDirectories.from = files(subprojects.sourceSets.main.output)
+    executionData.from = files(subprojects.jacocoTestReport.executionData)
+
+    reports {
+        xml.required = true
+        xml.enabled = true
+    }
 }
