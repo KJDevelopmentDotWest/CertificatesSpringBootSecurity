@@ -24,25 +24,23 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
 
     private static final String WHITESPACE = " ";
 
-    private List<ExceptionMessage> exceptionMessages;
-
     @Override
     public void validate(GiftCertificateDto value, Boolean checkId) throws ServiceException {
-        exceptionMessages = new ArrayList<>();
+        List<ExceptionMessage> exceptionMessages = new ArrayList<>();
 
         if (Objects.isNull(value)){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.GIFT_CERTIFICATE_CANNOT_BE_NULL);
         }
 
         if (checkId) {
-            validateId(value.getId());
+            validateIdNotNullAndPositive(value.getId());
         }
 
-        validateName(value.getName(), false);
-        validateDescription(value.getDescription(), false);
-        validatePrice(value.getPrice(), false);
-        validateDuration(value.getDuration(), false);
-        validateTags(value.getTags(), false);
+        validateName(value.getName(), false, exceptionMessages);
+        validateDescription(value.getDescription(), false, exceptionMessages);
+        validatePrice(value.getPrice(), false, exceptionMessages);
+        validateDuration(value.getDuration(), false, exceptionMessages);
+        validateTags(value.getTags(), false, exceptionMessages);
 
         if (!exceptionMessages.isEmpty()){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, exceptionMessages);
@@ -56,38 +54,28 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
      * @param fieldsCanBeNull true if all fields except id can be null
      */
     public void validate(GiftCertificateDto value, Boolean checkId, Boolean fieldsCanBeNull) throws ServiceException {
-        exceptionMessages = new ArrayList<>();
+        List<ExceptionMessage> exceptionMessages = new ArrayList<>();
 
         if (Objects.isNull(value)){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.GIFT_CERTIFICATE_CANNOT_BE_NULL);
         }
 
         if (checkId) {
-            validateId(value.getId());
+            validateIdNotNullAndPositive(value.getId());
         }
 
-        validateName(value.getName(), fieldsCanBeNull);
-        validateDescription(value.getDescription(), fieldsCanBeNull);
-        validatePrice(value.getPrice(), fieldsCanBeNull);
-        validateDuration(value.getDuration(), fieldsCanBeNull);
-        validateTags(value.getTags(), fieldsCanBeNull);
+        validateName(value.getName(), fieldsCanBeNull, exceptionMessages);
+        validateDescription(value.getDescription(), fieldsCanBeNull, exceptionMessages);
+        validatePrice(value.getPrice(), fieldsCanBeNull, exceptionMessages);
+        validateDuration(value.getDuration(), fieldsCanBeNull, exceptionMessages);
+        validateTags(value.getTags(), fieldsCanBeNull, exceptionMessages);
 
         if (!exceptionMessages.isEmpty()){
             throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, exceptionMessages);
         }
     }
 
-    private void validateId(Integer id) {
-        if (Objects.isNull(id)){
-            exceptionMessages.add(ExceptionMessage.GIFT_CERTIFICATE_ID_CANNOT_BE_NULL);
-            return;
-        }
-        if (id < 1){
-            exceptionMessages.add(ExceptionMessage.GIFT_CERTIFICATE_ID_CANNOT_BE_NEGATIVE);
-        }
-    }
-
-    private void validateName(String name, Boolean canBeNull) {
+    private void validateName(String name, Boolean canBeNull, List<ExceptionMessage> exceptionMessages) {
 
         if (Objects.isNull(name)){
             if (!canBeNull) {
@@ -110,7 +98,7 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         }
     }
 
-    private void validateDescription(String description, Boolean canBeNull) {
+    private void validateDescription(String description, Boolean canBeNull, List<ExceptionMessage> exceptionMessages) {
 
         if (Objects.isNull(description)){
             if (!canBeNull) {
@@ -127,7 +115,7 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         }
     }
 
-    private void validatePrice(Double price, Boolean canBeNull) {
+    private void validatePrice(Double price, Boolean canBeNull, List<ExceptionMessage> exceptionMessages) {
 
         if (Objects.isNull(price)){
             if (!canBeNull) {
@@ -141,7 +129,7 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         }
     }
 
-    private void validateDuration(Long duration, Boolean canBeNull) {
+    private void validateDuration(Long duration, Boolean canBeNull, List<ExceptionMessage> exceptionMessages) {
 
         if (Objects.isNull(duration)){
             if (!canBeNull) {
@@ -155,7 +143,7 @@ public class GiftCertificateValidator implements Validator<GiftCertificateDto> {
         }
     }
 
-    private void validateTags(List<TagDto> tags, Boolean canBeNull) {
+    private void validateTags(List<TagDto> tags, Boolean canBeNull, List<ExceptionMessage> exceptionMessages) {
 
         if (Objects.isNull(tags)){
             if (!canBeNull) {

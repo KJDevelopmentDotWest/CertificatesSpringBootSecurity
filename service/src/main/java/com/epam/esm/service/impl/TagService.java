@@ -12,7 +12,6 @@ import com.epam.esm.service.validator.impl.TagValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -92,13 +91,7 @@ public class TagService extends Service<TagDto> {
     @Override
     public List<TagDto> getAll() throws ServiceException {
         List<Tag> daoResult;
-
-        try {
-            daoResult = dao.findAllEntities();
-        } catch (DataAccessException e){
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
-
+        daoResult = dao.findAllEntities();
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
     }
 
@@ -126,12 +119,7 @@ public class TagService extends Service<TagDto> {
 
         Tag daoResult;
 
-        try {
-            daoResult = dao.findTagByName(name);
-        } catch (DataAccessException e){
-            logger.error(e);
-            throw new ServiceException(e.getMessage(), ExceptionCode.INTERNAL_DB_EXCEPTION, ExceptionMessage.INTERNAL_DB_EXCEPTION);
-        }
+        daoResult = dao.findTagByName(name);
 
         if (Objects.isNull(daoResult)){
             throw new ServiceException(ExceptionCode.ENTITY_NOT_FOUND, ExceptionMessage.THERE_IS_NO_TAG_WITH_PROVIDED_NAME);

@@ -8,12 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.*;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.util.List;
 
 @Repository
 public class UserDao implements Dao<User> {
 
-    @PersistenceContext
+    @PersistenceContext(type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
 
     @Override
@@ -41,13 +42,21 @@ public class UserDao implements Dao<User> {
         CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
         criteriaQuery.from(User.class);
         TypedQuery<User> query = entityManager.createQuery(criteriaQuery);
-        List<User> result = query.getResultList();
-        return result;
+        return query.getResultList();
     }
 
     @Override
     public User findEntityById(Integer id) {
         return entityManager.find(User.class, id);
+    }
+
+    public User findByUsername(String username) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(User.class);
+        Root<User> root = criteriaQuery.from(User.class);
+        criteriaQuery.where(criteriaBuilder.equal(root.get("username"), username));
+        TypedQuery<User> typedQuery = entityManager.createQuery(criteriaQuery);
+        return typedQuery.getResultList().stream().findFirst().orElse(null);
     }
 
     /**

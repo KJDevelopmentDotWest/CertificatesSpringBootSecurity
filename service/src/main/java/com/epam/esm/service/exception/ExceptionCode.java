@@ -11,7 +11,8 @@ public enum ExceptionCode {
     OPERATION_IS_NOT_SUPPORTED(1, 500),
     INTERNAL_DB_EXCEPTION(2, 500),
     VALIDATION_FAILED_EXCEPTION(3, 422),
-    ENTITY_NOT_FOUND(4, 404);
+    ENTITY_NOT_FOUND(4, 404),
+    BAD_CREDENTIALS(5, 401);
 
     private final Integer exceptionCode;
     private final Integer httpStatus;

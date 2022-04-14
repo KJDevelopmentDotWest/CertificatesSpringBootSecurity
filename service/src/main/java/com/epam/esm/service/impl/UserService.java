@@ -8,7 +8,9 @@ import com.epam.esm.service.dto.user.UserDto;
 import com.epam.esm.service.exception.ExceptionCode;
 import com.epam.esm.service.exception.ExceptionMessage;
 import com.epam.esm.service.exception.ServiceException;
+import com.epam.esm.service.validator.impl.UserValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -19,14 +21,36 @@ import java.util.stream.Collectors;
 @Component
 public class UserService extends Service<UserDto> {
 
-    @Autowired
-    private UserDao dao;
+    private final UserDao dao;
+
+    private final UserConverter converter;
+
+    private final BCryptPasswordEncoder passwordEncoder;
+
+    private final UserValidator validator;
 
     @Autowired
-    private UserConverter converter;
+    public UserService(UserDao dao, UserConverter converter, BCryptPasswordEncoder passwordEncoder, UserValidator validator) {
+        this.dao = dao;
+        this.converter = converter;
+        this.passwordEncoder = passwordEncoder;
+        this.validator = validator;
+    }
 
+    /**
+     * validates value and sends save request to corresponding dao class
+     * note that password in method argument must be decrypted, but returned user will have encrypted password
+     * @param value value to be saved
+     * @return saved value
+     * @throws ServiceException if user is invalid, value cannot be created, or database error occurred
+     */
     @Override
     public UserDto create(UserDto value) throws ServiceException {
+        validator.validate(value, false);
+        if (Objects.nonNull(dao.findByUsername(value.getUsername()))){
+            throw new ServiceException(ExceptionCode.VALIDATION_FAILED_EXCEPTION, ExceptionMessage.USER_USERNAME_MUST_BE_UNIQUE);
+        }
+        value.setPassword(passwordEncoder.encode(value.getPassword()));
         return converter.convert(dao.saveEntity(converter.convert(value)));
     }
 
@@ -66,8 +90,17 @@ public class UserService extends Service<UserDto> {
      * @return list of gift certificates by page number
      */
     public List<UserDto> getAll(String pageNumber, String pageSize) throws ServiceException {
-        List<User> daoResult;
-        daoResult = dao.findAllEntities(parsePageNumber(pageNumber), parsePageSize(pageSize));
+        List<User> daoResult = dao.findAllEntities(parsePageNumber(pageNumber), parsePageSize(pageSize));
         return daoResult.stream().map(converter::convert).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    public UserDto getByUsername(String username) throws ServiceException {
+        User result = dao.findByUsername(username);
+
+        if (Objects.isNull(result)){
+            throw new ServiceException("");
+        }
+
+        return converter.convert(result);
     }
 }

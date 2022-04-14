@@ -10,6 +10,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Dao interface implementation for Tag with ability to perform CRUD operations
@@ -49,12 +50,17 @@ public class TagDao implements Dao<Tag> {
     @Transactional
     public Boolean deleteEntity(Integer id) {
         Tag entity = findEntityById(id);
-        Query query = entityManager.createNativeQuery("DELETE FROM gift_certificate_to_tag WHERE tag_id = ?");
-        query.setParameter(1, entity.getId());
-        query.executeUpdate();
-        entityManager.remove(entity);
+
+        if (Objects.nonNull(entity)){
+            Query query = entityManager.createNativeQuery("DELETE FROM gift_certificate_to_tag WHERE tag_id = ?");
+            query.setParameter(1, entity.getId());
+            query.executeUpdate();
+            entityManager.remove(entity);
+        }
+
         entityManager.flush();
-        return true;
+
+        return Objects.nonNull(entity);
     }
 
     @Override
