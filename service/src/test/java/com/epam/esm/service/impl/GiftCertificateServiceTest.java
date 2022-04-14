@@ -1,7 +1,6 @@
 package com.epam.esm.service.impl;
 
 import com.epam.esm.dao.impl.GiftCertificateDao;
-import com.epam.esm.dao.impl.TagDao;
 import com.epam.esm.dao.model.giftcertificate.GiftCertificate;
 import com.epam.esm.dao.model.tag.Tag;
 import com.epam.esm.service.ServiceTestConfig;
@@ -15,8 +14,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
@@ -35,9 +32,6 @@ class GiftCertificateServiceTest {
 
     @Autowired
     private GiftCertificateDao giftCertificateDao;
-
-    @Autowired
-    private TagDao tagDao;
 
     private final GiftCertificate giftCertificate = new GiftCertificate(1,
             "name",
@@ -115,14 +109,6 @@ class GiftCertificateServiceTest {
         giftCertificates.add(giftCertificate2);
         giftCertificateDtos.add(giftCertificateDto);
         giftCertificateDtos.add(giftCertificateDto2);
-        Mockito.when(giftCertificateDao.findEntityById(OK_INTEGER)).thenReturn(giftCertificate);
-        Mockito.when(giftCertificateDao.findEntityById(NOT_OK_INTEGER)).thenThrow(BadSqlGrammarException.class);
-        Mockito.when(giftCertificateDao.findAllEntities()).thenReturn(giftCertificates);
-        Mockito.when(giftCertificateDao.saveEntity(giftCertificateNullId)).thenReturn(giftCertificate);
-        Mockito.when(giftCertificateDao.updateEntity(Mockito.any())).thenReturn(giftCertificate);
-        Mockito.when(giftCertificateDao.deleteEntity(OK_INTEGER)).thenReturn(true);
-        Mockito.when(giftCertificateDao.deleteEntity(NOT_OK_INTEGER)).thenThrow(BadSqlGrammarException.class);
-        Mockito.when(giftCertificateDao.findGiftCertificatesWithParameters(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(giftCertificates);
     }
 
     @Test

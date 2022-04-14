@@ -11,10 +11,6 @@ import com.epam.esm.service.validator.impl.TagValidator;
 import org.mockito.Mockito;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-
-import javax.sql.DataSource;
 
 @Configuration
 public class ServiceTestConfig {
@@ -57,15 +53,5 @@ public class ServiceTestConfig {
     @Bean
     public TagDao tagDao(){
         return Mockito.mock(TagDao.class);
-    }
-
-    @Bean(name = "dataSource")
-    public DataSource dataSource(){
-        return new DriverManagerDataSource();
-    }
-
-    @Bean(name = "jdbcTemplate")
-    public JdbcTemplate jdbcTemplate(){
-        return new JdbcTemplate(dataSource());
     }
 }
