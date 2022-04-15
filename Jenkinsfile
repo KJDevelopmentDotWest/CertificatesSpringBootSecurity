@@ -4,7 +4,7 @@ node {
   }
   stage('SonarQube Analysis') {
     withSonarQubeEnv() {
-      bat "./gradlew clean build jacocoTestReport jacocoRootReport sonarqube"
+      bat "./gradlew clean build service:jacocoTestReport jacocoRootReport sonarqube"
     }
   }
 }
