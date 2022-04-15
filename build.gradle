@@ -28,6 +28,14 @@ test {
     useJUnitPlatform()
 }
 
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        xml.enabled = true
+    }
+}
+
 sonarqube {
     properties {
         property "sonar.java.coveragePlugin", "jacoco"
@@ -43,10 +51,12 @@ task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
     description = 'Generates an aggregate report from all subprojects'
     dependsOn(subprojects.test)
 
+    sourceSets sourceSets.main
+    executionData.from = fileTree(buildDir).include("/jacoco/*.exec")
     additionalSourceDirs.from = files(subprojects.sourceSets.main.allSource.srcDirs)
     sourceDirectories.from = files(subprojects.sourceSets.main.allSource.srcDirs)
     classDirectories.from = files(subprojects.sourceSets.main.output)
-    executionData.from = files(subprojects.jacocoTestReport.executionData)
+
 
     reports {
         xml.required = true
